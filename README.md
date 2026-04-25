@@ -1,5 +1,5 @@
 # 💸 ExpenseTrack
-
+Live Link:- https://expense-tracker-8qgl.vercel.app/
 A full-stack personal expense tracking web application built with **Next.js**, **Prisma**, **MySQL**, and **JWT authentication**. Track your spending, organize by categories, set budgets, and manage your finances — all in one place.
 
 ---
