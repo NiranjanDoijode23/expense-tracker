@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 
 export async function POST(req){
 try {
@@ -25,10 +27,14 @@ try {
       { message: "Registered successfully", user: { email: user.email } },
       { status: 201 }
     );
-
+   const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",        // false for localhost adn true fro deployed
+      secure: false,        // false for localhost adn true fro deployed
       sameSite: "lax",
       maxAge: 60 * 60 * 24,
       path: "/",
@@ -37,7 +43,8 @@ try {
     return response;
 
 } catch (error) {
-    return Response.json({error:"Something Error"},{status:500});
+    console.error(error);
+    return NextResponse.json({error:"Something Error"},{status:500});
 }
 
 
