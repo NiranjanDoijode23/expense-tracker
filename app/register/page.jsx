@@ -29,7 +29,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/login");
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       setError("Something went wrong");
