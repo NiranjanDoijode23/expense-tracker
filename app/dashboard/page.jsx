@@ -8,6 +8,16 @@ export default function DashboardPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+
+  // Edit state
+  const [editingExpense, setEditingExpense] = useState(null); // holds the expense being edited
+  const [editAmount, setEditAmount] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [updating, setUpdating] = useState(false);
+  const [editError, setEditError] = useState("");
+
   const router = useRouter();
 
   useEffect(() => {
@@ -46,6 +56,57 @@ export default function DashboardPage() {
     setDeletingId(null);
   };
 
+  // Open edit modal and pre-fill form
+  const openEdit = (expense) => {
+    setEditingExpense(expense);
+    setEditAmount(expense.amount.toString());
+    setEditNote(expense.note || "");
+    setEditCategoryId(expense.categoryId ? String(expense.categoryId) : "");
+    setEditDate(new Date(expense.date).toISOString().split("T")[0]);
+    setEditError("");
+  };
+
+  const closeEdit = () => {
+    setEditingExpense(null);
+    setEditError("");
+  };
+
+  // Send PUT request
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setUpdating(true);
+    setEditError("");
+
+    const res = await fetch(`/api/expense/${editingExpense.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        amount: parseFloat(editAmount),
+        note: editNote,
+        categoryId: editCategoryId || null,
+        date: editDate,
+      }),
+    });
+
+    const data = await res.json();
+    setUpdating(false);
+
+    if (!res.ok) {
+      setEditError(data.error || "Failed to update expense");
+      return;
+    }
+
+    // Update expense in list locally
+    setExpenses((prev) =>
+      prev.map((exp) =>
+        exp.id === editingExpense.id ? { ...data.expense, category: categories.find(c => String(c.id) === editCategoryId) || null } : exp
+      )
+    );
+
+    closeEdit();
+  };
+
   const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
   const thisMonth = expenses
     .filter((e) => {
@@ -65,6 +126,8 @@ export default function DashboardPage() {
   const formatDate = (d) =>
     new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
+  const inputClass = "w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-white text-[14px] placeholder-white/20 outline-none focus:border-blue-400/50 focus:bg-white/[0.08] transition-all";
+
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center gap-4">
       <div className="w-10 h-10 border-[3px] border-white/10 border-t-blue-500 rounded-full animate-spin" />
@@ -73,23 +136,25 @@ export default function DashboardPage() {
   );
 
   const stats = [
-    { label: "Total Spent",  value: `₹${totalAmount.toFixed(2)}`, icon: "📊", color: "text-blue-400"   },
-    { label: "This Month",   value: `₹${thisMonth.toFixed(2)}`,   icon: "📅", color: "text-violet-400" },
-    { label: "Transactions", value: expenses.length,               icon: "🧾", color: "text-emerald-400"},
-    { label: "Categories",   value: categories.length,             icon: "🗂️",  color: "text-amber-400" },
+    { label: "Total Spent",  value: `₹${totalAmount.toFixed(2)}`, icon: "📊", color: "text-blue-400"    },
+    { label: "This Month",   value: `₹${thisMonth.toFixed(2)}`,   icon: "📅", color: "text-violet-400"  },
+    { label: "Transactions", value: expenses.length,               icon: "🧾", color: "text-emerald-400" },
+    { label: "Categories",   value: categories.length,             icon: "🗂️",  color: "text-amber-400"  },
   ];
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         @keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes modal-in { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .animate-fade-up { animation: fade-up 0.45s ease forwards; }
+        .animate-modal { animation: modal-in 0.25s ease forwards; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.4); cursor: pointer; }
+        select option { background: #13131f; color: #fff; }
       `}</style>
 
-      {/* Background Orbs */}
+      {/* Orbs */}
       <div className="fixed w-[600px] h-[600px] bg-blue-500 rounded-full blur-[100px] opacity-[0.07] -top-48 -left-48 pointer-events-none" />
       <div className="fixed w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[100px] opacity-[0.07] -bottom-24 -right-24 pointer-events-none" />
 
@@ -100,7 +165,6 @@ export default function DashboardPage() {
           <span className="font-semibold text-base">ExpenseTrack</span>
         </div>
         <div className="flex items-center gap-3.5">
-          {/* Avatar */}
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-[13px] font-bold">
               {getInitials()}
@@ -110,10 +174,7 @@ export default function DashboardPage() {
               <div className="text-[11px] text-white/35">{user?.email}</div>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500/10 border border-red-500/25 text-red-300 px-5 py-2.5 rounded-xl text-[13px] font-medium hover:bg-red-500/20 transition-colors cursor-pointer"
-          >
+          <button onClick={handleLogout} className="bg-red-500/10 border border-red-500/25 text-red-300 px-5 py-2.5 rounded-xl text-[13px] font-medium hover:bg-red-500/20 transition-colors cursor-pointer">
             Logout
           </button>
         </div>
@@ -138,10 +199,10 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 hover:border-white/[0.13] transition-colors">
+            <div key={stat.label} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 hover:border-white/[0.13] transition-colors">
               <div className="text-2xl mb-3">{stat.icon}</div>
               <div className="text-white/40 text-[11px] font-medium uppercase tracking-wider mb-1.5">{stat.label}</div>
               <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
@@ -150,7 +211,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Expenses Table */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 animate-fade-up hover:border-white/[0.13] transition-colors">
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 animate-fade-up">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
             <div>
               <h2 className="text-[17px] font-semibold mb-0.5">All Expenses</h2>
@@ -192,7 +253,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-[14px] font-medium mb-1 truncate">
-                        {expense.note || <span className="text-white/30 italic">No note</span>}
+                        {expense.note? expense.note: <span className="text-white/30 italic">No note</span>}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[12px] text-white/30">{formatDate(expense.date)}</span>
@@ -205,11 +266,21 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Right */}
-                  <div className="flex items-center gap-3.5 shrink-0">
+                  {/* Right — amount + Edit + Delete */}
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <span className="text-[16px] font-bold text-red-400">
-                      -₹{expense.amount.toFixed(2)}
+                      -₹{(expense.amount ?? 0).toFixed(2)}
                     </span>
+
+                    {/* Edit button */}
+                    <button
+                      onClick={() => openEdit(expense)}
+                      className="bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[12px] px-3.5 py-1.5 rounded-lg hover:bg-blue-500/20 transition-colors cursor-pointer"
+                    >
+                      Edit
+                    </button>
+
+                    {/* Delete button */}
                     <button
                       onClick={() => handleDelete(expense.id)}
                       disabled={deletingId === expense.id}
@@ -229,8 +300,127 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-
       </main>
+
+      {/* ── EDIT MODAL ── */}
+      {editingExpense && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm"
+          onClick={closeEdit}
+        >
+          <div
+            className="w-full max-w-[460px] bg-[#13131f] border border-white/10 rounded-3xl p-9 animate-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between mb-7">
+              <div>
+                <h2 className="text-xl font-bold mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Edit Expense
+                </h2>
+                <p className="text-white/35 text-[13px]">Update the details below</p>
+              </div>
+              <button
+                onClick={closeEdit}
+                className="text-white/30 hover:text-white/70 text-xl transition-colors cursor-pointer bg-none border-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Error */}
+            {editError && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-[13px] mb-5">
+                {editError}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdate} className="flex flex-col gap-4">
+
+              {/* Amount */}
+              <div>
+                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">
+                  Amount (₹) *
+                </label>
+                <input
+                  type="number"
+                  className={inputClass}
+                  placeholder="0.00"
+                  value={editAmount}
+                  onChange={(e) => setEditAmount(e.target.value)}
+                  min="0.01"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              {/* Note */}
+              <div>
+                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">
+                  Note
+                </label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  placeholder="What did you spend on?"
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">
+                  Category
+                </label>
+                <select
+                  className={inputClass}
+                  value={editCategoryId}
+                  onChange={(e) => setEditCategoryId(e.target.value)}
+                >
+                  <option value="">No category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">
+                  Date *
+                </label>
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={closeEdit}
+                  className="flex-1 py-3 bg-white/[0.04] border border-white/10 rounded-xl text-white/50 text-[14px] font-medium hover:bg-white/[0.08] transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[14px] font-semibold rounded-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
+                >
+                  {updating ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
-} 
+}
