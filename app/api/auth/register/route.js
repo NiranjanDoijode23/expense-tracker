@@ -21,7 +21,20 @@ try {
         },
     });
 
-    return Response.json({ message: "User registered successfully", user: { email: user.email } }, { status: 201 });
+     const response = NextResponse.json(
+      { message: "Registered successfully", user: { email: user.email } },
+      { status: 201 }
+    );
+
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",        // false for localhost adn true fro deployed
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24,
+      path: "/",
+    });
+
+    return response;
 
 } catch (error) {
     return Response.json({error:"Something Error"},{status:500});
