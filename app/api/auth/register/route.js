@@ -34,7 +34,7 @@ try {
     );
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: false,        // false for localhost adn true fro deployed
+      secure: process.env.NODE_ENV === "production",        // false for localhost adn true fro deployed
       sameSite: "lax",
       maxAge: 60 * 60 * 24,
       path: "/",
