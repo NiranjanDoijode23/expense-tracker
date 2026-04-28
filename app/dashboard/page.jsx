@@ -17,32 +17,51 @@ export default function DashboardPage() {
   const [editDate, setEditDate] = useState("");
   const [updating, setUpdating] = useState(false);
   const [editError, setEditError] = useState("");
-
+  const [filters, setFilters] = useState({
+    category: "",
+    from: "",
+    to: "",
+    search: "",
+    sort: "latest",
+    page: 1,
+  });
   const router = useRouter();
-
+  
   useEffect(() => {
     const init = async () => {
+
+      const query = new URLSearchParams({
+        ...filters,
+      }).toString();
+      
       const [userRes, expenseRes, catRes] = await Promise.all([
         fetch("/api/auth/me", { credentials: "include" }),
-        fetch("/api/expense", { credentials: "include" }),
+        fetch(`/api/expense?${query}`, { credentials: "include" }),
         fetch("/api/category", { credentials: "include" }),
       ]);
-
+      
       if (!userRes.ok) { router.push("/login"); return; }
-
+      
       const [userData, expData, catData] = await Promise.all([
         userRes.json(),
         expenseRes.ok ? expenseRes.json() : { expenses: [] },
         catRes.ok ? catRes.json() : { categories: [] },
       ]);
-
+      
       setUser(userData.user);
       setExpenses(expData.expenses || []);
       setCategories(catData.categories || []);
       setLoading(false);
     };
     init();
-  }, []);
+   
+  }, [filters.category,
+  filters.from,
+  filters.to,
+  filters.search,
+  filters.sort,
+  filters.page,]);
+  
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
@@ -56,7 +75,6 @@ export default function DashboardPage() {
     setDeletingId(null);
   };
 
-  // Open edit modal and pre-fill form
   const openEdit = (expense) => {
     setEditingExpense(expense);
     setEditAmount(expense.amount.toString());
@@ -136,10 +154,10 @@ export default function DashboardPage() {
   );
 
   const stats = [
-    { label: "Total Spent",  value: `₹${totalAmount.toFixed(2)}`, icon: "📊", color: "text-blue-400"    },
-    { label: "This Month",   value: `₹${thisMonth.toFixed(2)}`,   icon: "📅", color: "text-violet-400"  },
-    { label: "Transactions", value: expenses.length,               icon: "🧾", color: "text-emerald-400" },
-    { label: "Categories",   value: categories.length,             icon: "🗂️",  color: "text-amber-400"  },
+    { label: "Total Spent", value: `₹${totalAmount.toFixed(2)}`, icon: "📊", color: "text-blue-400" },
+    { label: "This Month", value: `₹${thisMonth.toFixed(2)}`, icon: "📅", color: "text-violet-400" },
+    { label: "Transactions", value: expenses.length, icon: "🧾", color: "text-emerald-400" },
+    { label: "Categories", value: categories.length, icon: "🗂️", color: "text-amber-400" },
   ];
 
   return (
@@ -213,6 +231,64 @@ export default function DashboardPage() {
         {/* Expenses Table */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 animate-fade-up">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+            <div className="flex gap-3 mb-4 flex-wrap">
+
+              {/* Search */}
+              <input
+                placeholder="Search..."
+                value={filters.search}
+                onChange={(e) =>
+                  setFilters({ ...filters, search: e.target.value, page: 1 })
+                }
+              />
+
+              {/* Category */}
+              <select
+                value={filters.category}
+                onChange={(e) =>
+                  setFilters({ ...filters, category: e.target.value, page: 1 })
+                }
+              >
+                <option value="">All Categories</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Date From */}
+              <input
+                type="date"
+                value={filters.from}
+                onChange={(e) =>
+                  setFilters({ ...filters, from: e.target.value, page: 1 })
+                }
+              />
+
+              {/* Date To */}
+              <input
+                type="date"
+                value={filters.to}
+                onChange={(e) =>
+                  setFilters({ ...filters, to: e.target.value, page: 1 })
+                }
+              />
+
+              {/* Sort */}
+              <select
+                value={filters.sort}
+                onChange={(e) =>
+                  setFilters({ ...filters, sort: e.target.value })
+                }
+              >
+                <option value="latest">Latest</option>
+                <option value="oldest">Oldest</option>
+                <option value="amount_high">High Amount</option>
+                <option value="amount_low">Low Amount</option>
+              </select>
+
+            </div>
             <div>
               <h2 className="text-[17px] font-semibold mb-0.5">All Expenses</h2>
               <p className="text-[12px] text-white/30">{expenses.length} total records</p>
@@ -253,7 +329,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-[14px] font-medium mb-1 truncate">
-                        {expense.note? expense.note: <span className="text-white/30 italic">No note</span>}
+                        {expense.note ? expense.note : <span className="text-white/30 italic">No note</span>}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[12px] text-white/30">{formatDate(expense.date)}</span>
@@ -299,6 +375,25 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+          <div className="flex gap-2 mt-4">
+            <button
+              disabled={filters.page === 1}
+              onClick={() =>
+                setFilters({ ...filters, page: filters.page - 1 })
+              }
+            >
+              Prev
+            </button>
+
+            <button
+              onClick={() =>
+                setFilters({ ...filters, page: filters.page + 1 })
+              }
+            >
+              Next
+            </button>
+          </div>
+
         </div>
       </main>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
+import { NextURL } from "next/dist/server/web/next-url";
 
 export async function POST(req) {
   try {
@@ -44,13 +45,61 @@ export async function GET(req) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
+
+    const { searchParams } = new URL(req.url);
+
+    const category = searchParams.get("category");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const search = searchParams.get("search");
+    const sort = searchParams.get("sort") || "latest";
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 5;
+
+    const where = {
+      userId,
+    }
+    const categoryId = Number(category);
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    if (from ||to) {
+      where.date = {};
+      if (from) where.date.gte = new Date(from);
+      if (to) where.date.lte = new Date(to);
+    }
+
+    if (search) {
+      where.note = {
+        contains: search,
+      }
+    }
+
+    // SORTING
+    let orderBy = {};
+    if (sort === "latest") orderBy.date = "desc";
+    if (sort === "oldest") orderBy.date = "asc";
+    if (sort === "amount_high") orderBy.amount = "desc";
+    if (sort === "amount_low") orderBy.amount = "asc";
+
+    // PAGINATION
+    const skip = (page - 1) * limit;
+
+
     const expenses = await prisma.expense.findMany({
-      where: { userId },
+      where,
+      orderBy,
+      skip,
+      take: limit,
       include: { category: true }, // ✅ includes category name
-      orderBy: { date: "desc" },
     });
 
-    return NextResponse.json({ expenses }, { status: 200 }); // ✅ wrapped in object
+    const total = await prisma.expense.count({ where });
+    console.log(where);
+  
+
+    return NextResponse.json({ expenses, total, page, totalPages: Math.ceil(total / limit), }, { status: 200 }); // ✅ wrapped in object
 
   } catch (error) {
     console.error("GET /api/expense error:", error);
