@@ -96,7 +96,6 @@ export async function GET(req) {
     });
 
     const total = await prisma.expense.count({ where });
-    console.log(where);
   
 
     return NextResponse.json({ expenses, total, page, totalPages: Math.ceil(total / limit), }, { status: 200 }); // ✅ wrapped in object

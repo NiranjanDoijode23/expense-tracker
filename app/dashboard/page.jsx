@@ -280,9 +280,9 @@ export default function DashboardPage() {
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-10 py-[18px] border-b border-white/[0.06] bg-[rgba(10,10,15,0.85)] backdrop-blur-xl">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-lg">💸</div>
-          <span className="font-semibold text-base">ExpenseTrack</span>
+        <div className="flex items-center gap-2.5 cursor-pointer">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-lg"><button className="cursor-pointer"onClick={(e)=>router.push("/dashboard")}>💸</button></div>
+          <span className="font-semibold text-base"><button className="cursor-pointer" onClick={(e)=>router.push("/dashboard")}>ExpenseTrack </button> </span>
         </div>
         <div className="flex items-center gap-3.5">
           <div className="flex items-center gap-2.5 cursor-pointer">
