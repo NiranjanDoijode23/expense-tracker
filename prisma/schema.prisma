@@ -44,18 +44,19 @@ model Category {
 
   userId Int
   user   User   @relation(fields: [userId], references: [id])
-
+  budgets  Budget[]  // ← add this line
   expenses Expense[]
 }
 
 model Budget {
-  id       Int     @id @default(autoincrement())
-  amount   Float
-  month    Int
-  year     Int
-
-  userId   Int
-  user   User   @relation(fields: [userId], references: [id])
+  id         Int       @id @default(autoincrement())
+  amount     Float
+  month      Int
+  year       Int
+  userId     Int
+  categoryId Int?                    // ← add this line
+  user       User      @relation(fields: [userId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id]) // ← add this line
 }
 
 model Niranjan {

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "./components/ThemeToggle";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -329,6 +330,7 @@ export default function LandingPage() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <ThemeToggle />
           <button className="btn-ghost" onClick={() => router.push("/login")} style={{ padding: "10px 22px", fontSize: 14 }}>
             Sign in
           </button>

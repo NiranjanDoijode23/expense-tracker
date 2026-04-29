@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -55,6 +56,10 @@ export default function RegisterPage() {
       <div className="absolute w-[400px] h-[400px] bg-blue-500 rounded-full blur-[80px] opacity-15 -bottom-20 -left-24 pointer-events-none" />
 
       {/* Card */}
+      <div className="absolute top-8 right-8 z-50">
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-md bg-white/[0.04] border border-white/[0.09] rounded-3xl px-10 py-11 backdrop-blur-xl relative z-10 animate-fade-up">
 
         {/* Icon */}

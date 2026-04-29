@@ -39,5 +39,7 @@ export const config = {
     "/add-expense/:path*",
     "/api/expense/:path*",
     "/api/category/:path*", 
+    "/api/budget/:path*",
+    "/profile/:path",
   ],
 };
