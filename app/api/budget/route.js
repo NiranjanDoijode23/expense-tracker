@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { canAddBudget } from "@/lib/planCheck"; // ✅ add this
+
 
 function monthStartUTC(year, month) {
   return new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
@@ -93,6 +95,15 @@ export async function POST(req) {
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const check = await canAddBudget(authUser.id);
+    if (!check.allowed) {
+      return NextResponse.json(
+        { error: check.message, limitReached: true, limit: check.limit },
+        { status: 403 }
+      );
+    }
+
     const { amount, month, year, categoryId } = await req.json();
 
     if (!amount || !month || !year) {

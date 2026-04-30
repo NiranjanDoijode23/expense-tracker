@@ -5,6 +5,10 @@ import jwt from "jsonwebtoken";
 
 export async function POST(req){
 try {
+    if (!process.env.JWT_SECRET) {
+        return NextResponse.json({error:"Server auth config missing (JWT_SECRET)"},{status:500});
+    }
+
     const {email,password}=await req.json();
     if (!email || !password || password.length < 8) {
         return NextResponse.json({error:"Valid email and min 8 char password required"},{status:400});

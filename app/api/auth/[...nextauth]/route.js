@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import prisma from "@/lib/prisma";
 
 export const authOptions = {
+  trustHost: true,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -60,7 +61,14 @@ export const authOptions = {
 
     // ✅ 🔥 THIS IS WHAT YOU WERE MISSING
     async redirect({ url, baseUrl }) {
-      // Always send user to dashboard after login
+      // Allow relative callback URLs and same-origin callbacks only.
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        const callbackUrl = new URL(url);
+        if (callbackUrl.origin === baseUrl) return url;
+      } catch {
+        // Fall through to default.
+      }
       return `${baseUrl}/dashboard`;
     },
   },

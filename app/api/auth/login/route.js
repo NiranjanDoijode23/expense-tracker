@@ -5,6 +5,13 @@ import { NextResponse } from "next/server"; // 👈 change this
 
 export async function POST(req) {
   try {
+    if (!process.env.JWT_SECRET) {
+      return NextResponse.json(
+        { error: "Server auth config missing (JWT_SECRET)" },
+        { status: 500 }
+      );
+    }
+
     const { email, password } = await req.json();
 
     const user = await prisma.user.findUnique({ where: { email } });

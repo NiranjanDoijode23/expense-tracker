@@ -1,12 +1,22 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { canViewAnalytics } from "@/lib/planCheck"; // ✅ add this
+
 
 export async function GET(req) {
   try {
     const authUser = await getAuthenticatedUser(req);
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const check = await canViewAnalytics(authUser.id);
+    if (!check.allowed) {
+      return NextResponse.json(
+        { error: check.message, limitReached: true },
+        { status: 403 }
+      );
     }
 
     // Fetch all expenses with category

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { canAddCategory } from "@/lib/planCheck"; // ✅ add this
+
 
 // GET /api/category — fetch all categories of logged in user
 export async function GET(req) {
@@ -9,6 +11,7 @@ export async function GET(req) {
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
     const categories = await prisma.category.findMany({
       where: { userId: authUser.id },
       orderBy: { name: "asc" },
@@ -29,6 +32,15 @@ export async function POST(req) {
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    
+    const check = await canAddCategory(authUser.id);
+    if (!check.allowed) {
+      return NextResponse.json(
+        { error: check.message, limitReached: true, limit: check.limit },
+        { status: 403 }
+      );
+    }
+
     const { name } = await req.json();
 
     if (!name || name.trim() === "") {

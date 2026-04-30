@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { canAddExpense } from "@/lib/planCheck"; // ✅ add this
 
 function parseDateInput(dateValue) {
   if (!dateValue) return new Date();
@@ -17,6 +18,16 @@ export async function POST(req) {
     if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // ✅ Check plan limit before adding
+    const check = await canAddExpense(authUser.id);
+    if (!check.allowed) {
+      return NextResponse.json(
+        { error: check.message, limitReached: true, limit: check.limit },
+        { status: 403 }
+      );
+    }
+
 
     const { amount, categoryId, note, date } = await req.json();
     if (!amount || Number(amount) <= 0) {

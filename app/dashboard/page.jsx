@@ -6,6 +6,10 @@ import { exportCSV, exportExcel } from "@/lib/exportExpenses"; // ✅ import exp
 import ThemeToggle from "../components/ThemeToggle";
 import toast from "react-hot-toast"; // ✅ add this
 import { signOut } from "next-auth/react";
+import UpgradePrompt from "../components/UpgradePrompt";
+import PlanUsageBar from "../components/PlanUsageBar";
+import { PLANS } from "@/lib/plans";
+
 
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -19,6 +23,7 @@ function getLocalDateInputValue(dateValue) {
 }
 
 export default function DashboardPage() {
+  const [upgradePrompt, setUpgradePrompt] = useState(null);
   const [user, setUser] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [allExpenses, setAllExpenses] = useState([]); // ✅ unfiltered — used for export
@@ -110,6 +115,13 @@ export default function DashboardPage() {
 
   // ✅ Handle CSV export
   const handleExportCSV = async () => {
+    if (user?.plan !== "premium") {
+      setUpgradePrompt({
+        message: "Export is a Premium feature. Upgrade to download your expenses as CSV.",
+        feature: "export",
+      });
+      return;
+    }
     setExporting(true);
     try {
       exportCSV(allExpenses, `expensetrack_${user?.email?.split("@")[0]}`);
@@ -120,6 +132,13 @@ export default function DashboardPage() {
 
   // ✅ Handle Excel export
   const handleExportExcel = async () => {
+    if (user?.plan !== "premium") {
+      setUpgradePrompt({
+        message: "Export is a Premium feature. Upgrade to download your expenses as Excel.",
+        feature: "export",
+      });
+      return;
+    }
     setExporting(true);
     try {
       exportExcel(allExpenses, `expensetrack_${user?.email?.split("@")[0]}`);
@@ -130,11 +149,11 @@ export default function DashboardPage() {
 
 
 
-const handleLogout = async () => {
-  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-  await signOut({ redirect: false });
-  router.push("/login");
-};
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    await signOut({ redirect: false });
+    router.push("/login");
+  };
 
   const handleDelete = (expense) => {
     setConfirmDelete({
@@ -250,34 +269,47 @@ const handleLogout = async () => {
 
   };
 
-  const handleAddBudget = async (e) => {
-    e.preventDefault();
-    setAddingBudget(true);
-    setBudgetError("");
+// AFTER — updated with plan check
+const handleAddBudget = async (e) => {
+  e.preventDefault();
+  setAddingBudget(true);
+  setBudgetError("");
 
-    const res = await fetch("/api/budget", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        amount: parseFloat(budgetAmount),
-        month: Number(budgetMonth),
-        year: Number(budgetYear),
-        categoryId: budgetCategoryId || null,
-      }),
-    });
+  const res = await fetch("/api/budget", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      amount: parseFloat(budgetAmount),
+      month: Number(budgetMonth),
+      year: Number(budgetYear),
+      categoryId: budgetCategoryId || null,
+    }),
+  });
 
-    const data = await res.json();
-    setAddingBudget(false);
+  const data = await res.json();
+  setAddingBudget(false);
 
-    if (!res.ok) { toast.error(data.error || "Failed to add budget"); return; }
+  if (!res.ok) {
+    // ✅ NEW — if free user hit budget limit, show upgrade popup
+    if (res.status === 403 && data.limitReached) {
+      setUpgradePrompt({
+        message: data.error,
+        feature: "budgets",
+      });
+      return;
+    }
+    // for any other error, show toast
+    toast.error(data.error || "Failed to add budget");
+    return;
+  }
 
-    toast.success("Budget set! 🎯");
-    setBudgetAmount("");
-    setBudgetCategoryId("");
-    refreshBudgets();
+  toast.success("Budget set! 🎯");
+  setBudgetAmount("");
+  setBudgetCategoryId("");
+  refreshBudgets();
+};
 
-  };
 
   const handleDeleteBudget = (budget) => {
     setConfirmDelete({
@@ -434,6 +466,7 @@ const handleLogout = async () => {
         </div>
 
         {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up"></div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 hover:border-white/[0.13] transition-colors">
@@ -443,6 +476,15 @@ const handleLogout = async () => {
             </div>
           ))}
         </div>
+
+        <PlanUsageBar
+          plan={user?.plan || "free"}
+          counts={{
+            expenses: allExpenses.length,
+            categories: categories.length,
+            budgets: budgets.length,
+          }}
+        />
 
         {/* ✅ Budget Alert Banner */}
         {(() => {
@@ -516,14 +558,36 @@ const handleLogout = async () => {
         {/* ── ANALYTICS TAB ── */}
         {activeTab === "analytics" && (
           <div className="animate-fade-up">
-            <ExpenseCharts
-              byCategory={analytics?.byCategory || []}
-              byMonth={analytics?.byMonth || []}
-              byDay={analytics?.byDay || []}
-            />
+            {user?.plan !== "premium" ? (
+              // ✅ Show locked state for free users
+              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-16 text-center">
+                <div className="text-5xl mb-4">📊</div>
+                <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-1.5 text-amber-300 text-[12px] font-medium mb-4">
+                  👑 Premium Feature
+                </div>
+                <h3 className="text-[18px] font-bold mb-3">Analytics is a Premium Feature</h3>
+                <p className="text-white/40 text-sm mb-7 max-w-[360px] mx-auto leading-relaxed">
+                  Upgrade to Premium to unlock charts, spending trends, category breakdowns and more.
+                </p>
+                <button
+                  onClick={() => setUpgradePrompt({
+                    message: "Upgrade to view your spending analytics, pie charts, monthly trends and daily breakdown.",
+                    feature: "analytics",
+                  })}
+                  className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-[14px] rounded-xl hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                >
+                  👑 Unlock Analytics
+                </button>
+              </div>
+            ) : (
+              <ExpenseCharts
+                byCategory={analytics?.byCategory || []}
+                byMonth={analytics?.byMonth || []}
+                byDay={analytics?.byDay || []}
+              />
+            )}
           </div>
         )}
-
         {/* ── BUDGET TAB ── */}
         {activeTab === "budget" && (
           <div className="animate-fade-up flex flex-col gap-6">
@@ -817,6 +881,14 @@ const handleLogout = async () => {
             </div>
           </div>
         </div>
+      )}
+      {/* ✅ Upgrade Prompt Modal */}
+      {upgradePrompt && (
+        <UpgradePrompt
+          message={upgradePrompt.message}
+          feature={upgradePrompt.feature}
+          onClose={() => setUpgradePrompt(null)}
+        />
       )}
     </div>
   );

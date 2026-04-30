@@ -39,34 +39,55 @@ export default function AddExpensePage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchCategories(); }, []);
 
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    setAddingCategory(true);
-    setCategoryError("");
+ // AFTER
+const handleAddCategory = async () => {
+  if (!newCategoryName.trim()) return;
+  setAddingCategory(true);
+  setCategoryError("");
 
-    const res = await fetch("/api/category", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newCategoryName.trim() }),
-      credentials: "include",
-    });
+  const res = await fetch("/api/category", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: newCategoryName.trim() }),
+    credentials: "include",
+  });
 
-    const data = await res.json();
-    setAddingCategory(false);
+  const data = await res.json();
+  setAddingCategory(false);
 
+  if (!res.ok) {
+    // ✅ NEW — free user hit 5 category limit
+    if (res.status === 403 && data.limitReached) {
+      setCategoryError(
+        "Category limit reached (5/5). Upgrade to Premium for unlimited categories."
+      );
+      return;
+    }
+    // any other error
+    setCategoryError(data.error || "Failed to add category");
+    return;
+  }
+
+  setCategories((prev) => [...prev, data.category].sort((a, b) => a.name.localeCompare(b.name)));
+  setCategoryId(String(data.category.id));
+  setNewCategoryName("");
+  setShowNewCategory(false);
+};
+
+  const handleSubmit = async (e) => {
+
+    // ✅ Handle plan limit reached
     if (!res.ok) {
+      if (res.status === 403 && data.limitReached) {
+        setError(""); // clear form error
+        // Redirect to pricing with message
+        window.location.href = "/pricing?reason=expense_limit";
+        return;
+      }
+      setError(data.error || "Failed to add expense");
       toast.error(data.error || "Failed to add expense");
       return;
     }
-    toast.success("Expense added! 🧾"); // ✅
-
-    setCategories((prev) => [...prev, data.category].sort((a, b) => a.name.localeCompare(b.name)));
-    setCategoryId(String(data.category.id));
-    setNewCategoryName("");
-    setShowNewCategory(false);
-  };
-
-  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError("");
@@ -81,10 +102,10 @@ export default function AddExpensePage() {
     const data = await res.json();
     setSubmitting(false);
 
-    if (!res.ok) { 
-       toast.error(data.error || "Failed to add expense");
-      setError(data.error || "Failed to add expense"); return; 
-    }
+     if (!res.ok) {
+    setError(data.error || "Failed to add expense"); // ← change this block
+    return;
+  }
     toast.success("Expense added! 🧾");
     // setSuccess(true);
     setTimeout(() => router.push("/dashboard"), 1200);
