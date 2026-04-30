@@ -1,20 +1,16 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 // GET /api/category — fetch all categories of logged in user
 export async function GET(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-
-    if (!token) {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const categories = await prisma.category.findMany({
-      where: { userId: decoded.userId },
+      where: { userId: authUser.id },
       orderBy: { name: "asc" },
     });
 
@@ -29,13 +25,10 @@ export async function GET(req) {
 // POST /api/category — create a new category
 export async function POST(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-
-    if (!token) {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { name } = await req.json();
 
     if (!name || name.trim() === "") {
@@ -46,7 +39,7 @@ export async function POST(req) {
     const existing = await prisma.category.findFirst({
       where: {
         name: name.trim(),
-        userId: decoded.userId,
+        userId: authUser.id,
       },
     });
 
@@ -57,7 +50,7 @@ export async function POST(req) {
     const category = await prisma.category.create({
       data: {
         name: name.trim(),
-        userId: decoded.userId,
+        userId: authUser.id,
       },
     });
 

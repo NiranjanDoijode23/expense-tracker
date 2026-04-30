@@ -5,9 +5,18 @@ import ExpenseCharts from "../components/ExpenseCharts";
 import { exportCSV, exportExcel } from "@/lib/exportExpenses"; // ✅ import export utils
 import ThemeToggle from "../components/ThemeToggle";
 import toast from "react-hot-toast"; // ✅ add this
+import { signOut } from "next-auth/react";
 
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function getLocalDateInputValue(dateValue) {
+  const date = new Date(dateValue);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -41,6 +50,7 @@ export default function DashboardPage() {
   const [addingBudget, setAddingBudget] = useState(false);
   const [budgetError, setBudgetError] = useState("");
   const [deletingBudgetId, setDeletingBudgetId] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Filters & pagination
   const [filters, setFilters] = useState({
@@ -62,7 +72,10 @@ export default function DashboardPage() {
         fetch("/api/budget", { credentials: "include" }),
       ]);
 
-      if (!userRes.ok) { router.push("/login"); return; }
+      if (userRes.status === 401) {
+        router.push("/login");
+        return;
+      }
 
       const [userData, expData, allExpData, catData, analyticsData, budgetData] = await Promise.all([
         userRes.json(),
@@ -73,16 +86,17 @@ export default function DashboardPage() {
         budgetRes.ok ? budgetRes.json() : { budgets: [] },
       ]);
 
-      setUser(userData.user);
+      setUser(userData.user || null);
       setExpenses(expData.expenses || []);
       setAllExpenses(allExpData.expenses || []); // ✅
+      setTotalPages(expData.totalPages || 1);
       setCategories(catData.categories || []);
       setAnalytics(analyticsData);
       setBudgets(budgetData.budgets || []);
       setLoading(false);
     };
     init();
-  }, [filters.category, filters.from, filters.to, filters.search, filters.sort, filters.page]);
+  }, [filters, router]);
 
   const refreshAnalytics = async () => {
     const ar = await fetch("/api/expense/analytics", { credentials: "include" });
@@ -114,10 +128,13 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    router.push("/login");
-  };
+
+
+const handleLogout = async () => {
+  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+  await signOut({ redirect: false });
+  router.push("/login");
+};
 
   const handleDelete = (expense) => {
     setConfirmDelete({
@@ -186,7 +203,7 @@ export default function DashboardPage() {
     setEditAmount(expense.amount.toString());
     setEditNote(expense.note || "");
     setEditCategoryId(expense.categoryId ? String(expense.categoryId) : "");
-    setEditDate(new Date(expense.date).toISOString().split("T")[0]);
+    setEditDate(getLocalDateInputValue(expense.date));
     setEditError("");
   };
 
@@ -286,8 +303,9 @@ export default function DashboardPage() {
 
   // };
 
-  const totalAmount = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
-  const thisMonth = expenses
+  const totalSpent = allExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const visibleTotal = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const thisMonth = allExpenses
     .filter((e) => {
       const d = new Date(e.date);
       const now = new Date();
@@ -327,7 +345,7 @@ export default function DashboardPage() {
   );
 
   const stats = [
-    { label: "Total Spent", value: `₹${totalAmount.toFixed(2)}`, icon: "📊", color: "text-blue-400" },
+    { label: "Total Spent", value: `₹${totalSpent.toFixed(2)}`, icon: "📊", color: "text-blue-400" },
     { label: "This Month", value: `₹${thisMonth.toFixed(2)}`, icon: "📅", color: "text-violet-400" },
     { label: "Transactions", value: allExpenses.length, icon: "🧾", color: "text-emerald-400" },
     { label: "Budgets", value: budgets.length, icon: "🎯", color: "text-amber-400" },
@@ -385,7 +403,7 @@ export default function DashboardPage() {
             <h1 className="text-[34px] font-bold mb-1.5" style={{ fontFamily: "'Playfair Display', serif" }}>
               Hey, {getDisplayName()} 👋
             </h1>
-            <p className="text-white/35 text-sm">Here's your expense overview</p>
+            <p className="text-white/35 text-sm">Here&apos;s your expense overview</p>
           </div>
           {/* ✅ Header buttons — Add Expense + Export CSV + Export Excel */}
           <div className="flex items-center gap-3 flex-wrap">
@@ -442,7 +460,7 @@ export default function DashboardPage() {
                   <div className="flex-1 min-w-0">
                     <span className="text-red-300 text-[13px] font-medium">
                       <span className="font-bold">{b.category?.name || "Overall"}</span> budget exceeded!
-                      You're ₹{Math.abs(b.remaining).toFixed(2)} over your ₹{b.amount.toFixed(2)} limit
+                      You&apos;re ₹{Math.abs(b.remaining).toFixed(2)} over your ₹{b.amount.toFixed(2)} limit
                       for {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][b.month - 1]}.
                     </span>
                   </div>
@@ -692,7 +710,7 @@ export default function DashboardPage() {
                 ))}
                 <div className="flex justify-between items-center mt-5 pt-5 border-t border-white/[0.08]">
                   <span className="text-sm text-white/45 font-medium">Total</span>
-                  <span className="text-xl font-bold text-red-400">-₹{totalAmount.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-red-400">-₹{visibleTotal.toFixed(2)}</span>
                 </div>
               </div>
             )}
@@ -705,7 +723,7 @@ export default function DashboardPage() {
                   className="bg-white/[0.04] border border-white/10 text-white/50 text-[13px] px-4 py-2 rounded-xl hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
                   ← Prev
                 </button>
-                <button disabled={expenses.length === 0} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+                <button disabled={filters.page >= totalPages} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                   className="bg-white/[0.04] border border-white/10 text-white/50 text-[13px] px-4 py-2 rounded-xl hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
                   Next →
                 </button>
@@ -778,7 +796,7 @@ export default function DashboardPage() {
             </h2>
             <p className="text-white/40 text-[13px] text-center mb-7 leading-relaxed">
               Are you sure you want to delete{" "}
-              <span className="text-white font-medium">"{confirmDelete.name}"</span>?
+              <span className="text-white font-medium">&quot;{confirmDelete.name}&quot;</span>?
               <br />This action cannot be undone.
             </p>
 

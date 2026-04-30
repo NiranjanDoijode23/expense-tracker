@@ -7,45 +7,53 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 generator client {
   provider = "prisma-client-js"
 }
 
-
-
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String? // ← add ? to make it nullable
 
-  expenses  Expense[]
+  name       String?
+  createdAt  DateTime  @default(now())
+  image      String? // ← add this (Google profile pic)
+  plan       String    @default("free") // ← add this
+  planExpiry DateTime? // ← add this
+
+  expenses   Expense[]
   categories Category[]
-  budgets Budget[]
+  budgets    Budget[]
 }
 
 model Expense {
-  id         Int      @id @default(autoincrement())
-  amount     Float
-  note       String?
-  date       DateTime @default(now())
+  id     Int      @id @default(autoincrement())
+  amount Float
+  note   String?
+  date   DateTime @default(now())
 
   userId     Int
   categoryId Int?
 
-  user       User     @relation(fields: [userId], references: [id])
-  category   Category? @relation(fields: [categoryId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([userId, date])
+  @@index([userId, categoryId, date])
 }
 
 model Category {
-  id     Int    @id @default(autoincrement())
-  name   String
+  id   Int    @id @default(autoincrement())
+  name String
 
-  userId Int
-  user   User   @relation(fields: [userId], references: [id])
-  budgets  Budget[]  // ← add this line
+  userId   Int
+  user     User      @relation(fields: [userId], references: [id])
+  budgets  Budget[] // ← add this line
   expenses Expense[]
+
+  @@unique([userId, name])
 }
 
 model Budget {
@@ -54,16 +62,19 @@ model Budget {
   month      Int
   year       Int
   userId     Int
-  categoryId Int?                    // ← add this line
+  categoryId Int? // ← add this line
   user       User      @relation(fields: [userId], references: [id])
   category   Category? @relation(fields: [categoryId], references: [id]) // ← add this line
+
+  @@index([userId, year, month])
+  @@unique([userId, year, month, categoryId])
 }
 
 model Niranjan {
-  id       Int     @id @default(autoincrement())
-  amount   Float
-  month    Int
-  year     Int
+  id     Int   @id @default(autoincrement())
+  amount Float
+  month  Int
+  year   Int
 
-  userId   Int
+  userId Int
 }

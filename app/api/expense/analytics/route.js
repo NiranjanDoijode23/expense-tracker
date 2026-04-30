@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 export async function GET(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Fetch all expenses with category
     const expenses = await prisma.expense.findMany({
-      where: { userId },
+      where: { userId: authUser.id },
       include: { category: true },
       orderBy: { date: "asc" },
     });
@@ -30,7 +29,7 @@ export async function GET(req) {
 
     // 2. Group by month → for Bar chart
     const monthMap = {};
-    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     expenses.forEach((e) => {
       const d = new Date(e.date);
       const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;

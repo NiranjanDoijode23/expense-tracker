@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "../components/ThemeToggle";
 import toast from "react-hot-toast";
+import { signOut } from "next-auth/react";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -31,7 +32,13 @@ export default function ProfilePage() {
       setLoading(false);
     };
     fetchProfile();
-  }, []);
+  }, [router]);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    await signOut({ redirect: false });
+    router.push("/login");
+  };
 
   // Update name
   const handleUpdateName = async (e) => {
@@ -149,6 +156,12 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3">
           {/* Theme Toggle */}
           <ThemeToggle />
+          <button
+            onClick={handleLogout}
+            className="bg-red-500/10 border border-red-500/25 text-red-300 px-4 py-2 rounded-xl text-[13px] font-medium hover:bg-red-500/20 transition-colors cursor-pointer"
+          >
+            Logout
+          </button>
           <button
             onClick={() => router.push("/dashboard")}
             className="text-white/40 text-[13px] hover:text-white/80 transition-colors cursor-pointer bg-transparent border-none"

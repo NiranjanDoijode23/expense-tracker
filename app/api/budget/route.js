@@ -1,54 +1,82 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
+
+function monthStartUTC(year, month) {
+  return new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+}
+
+function nextMonthStartUTC(year, month) {
+  return new Date(Date.UTC(year, month, 1, 0, 0, 0));
+}
 
 // GET /api/budget — fetch all budgets with actual spending calculated
 export async function GET(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Fetch all budgets for this user
     const budgets = await prisma.budget.findMany({
-      where: { userId },
+      where: { userId: authUser.id },
       include: { category: true },
       orderBy: [{ year: "desc" }, { month: "desc" }],
     });
 
-    // For each budget, calculate actual spending
-    const budgetsWithSpending = await Promise.all(
-      budgets.map(async (budget) => {
-        // Build date range for this budget's month/year
-        const startDate = new Date(budget.year, budget.month - 1, 1);
-        const endDate = new Date(budget.year, budget.month, 0, 23, 59, 59);
+    if (!budgets.length) {
+      return NextResponse.json({ budgets: [] }, { status: 200 });
+    }
 
-        // Build expense query
-        const whereClause = {
-          userId,
-          date: { gte: startDate, lte: endDate },
-        };
+    const minYear = Math.min(...budgets.map((b) => b.year));
+    const minMonth = Math.min(...budgets.filter((b) => b.year === minYear).map((b) => b.month));
+    const maxYear = Math.max(...budgets.map((b) => b.year));
+    const maxMonth = Math.max(...budgets.filter((b) => b.year === maxYear).map((b) => b.month));
 
-        // If budget has a category → filter by category
-        // If no category → overall monthly budget (all expenses)
-        if (budget.categoryId) {
-          whereClause.categoryId = budget.categoryId;
-        }
+    const allExpenses = await prisma.expense.findMany({
+      where: {
+        userId: authUser.id,
+        date: {
+          gte: monthStartUTC(minYear, minMonth),
+          lt: nextMonthStartUTC(maxYear, maxMonth),
+        },
+      },
+      select: {
+        amount: true,
+        date: true,
+        categoryId: true,
+      },
+    });
 
-        const expenses = await prisma.expense.findMany({ where: whereClause });
-        const spent = expenses.reduce((sum, e) => sum + e.amount, 0);
-        const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+    const monthlyTotals = {};
+    const categoryTotals = {};
 
-        return {
-          ...budget,
-          spent: parseFloat(spent.toFixed(2)),
-          percentage: parseFloat(percentage.toFixed(1)),
-          remaining: parseFloat((budget.amount - spent).toFixed(2)),
-        };
-      })
-    );
+    for (const expense of allExpenses) {
+      const date = new Date(expense.date);
+      const key = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}`;
+      monthlyTotals[key] = (monthlyTotals[key] || 0) + expense.amount;
+
+      if (expense.categoryId) {
+        const categoryKey = `${key}-${expense.categoryId}`;
+        categoryTotals[categoryKey] = (categoryTotals[categoryKey] || 0) + expense.amount;
+      }
+    }
+
+    const budgetsWithSpending = budgets.map((budget) => {
+      const monthKey = `${budget.year}-${budget.month}`;
+      const spent = budget.categoryId
+        ? (categoryTotals[`${monthKey}-${budget.categoryId}`] || 0)
+        : (monthlyTotals[monthKey] || 0);
+      const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+
+      return {
+        ...budget,
+        spent: parseFloat(spent.toFixed(2)),
+        percentage: parseFloat(percentage.toFixed(1)),
+        remaining: parseFloat((budget.amount - spent).toFixed(2)),
+      };
+    });
 
     return NextResponse.json({ budgets: budgetsWithSpending }, { status: 200 });
 
@@ -61,12 +89,10 @@ export async function GET(req) {
 // POST /api/budget — create a new budget
 export async function POST(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { amount, month, year, categoryId } = await req.json();
 
     if (!amount || !month || !year) {
@@ -76,7 +102,7 @@ export async function POST(req) {
     // Check if budget already exists for this month/year/category combo
     const existing = await prisma.budget.findFirst({
       where: {
-        userId,
+        userId: authUser.id,
         month: Number(month),
         year: Number(year),
         categoryId: categoryId ? Number(categoryId) : null,
@@ -95,7 +121,7 @@ export async function POST(req) {
         amount: parseFloat(amount),
         month: Number(month),
         year: Number(year),
-        userId,
+        userId: authUser.id,
         categoryId: categoryId ? Number(categoryId) : null,
       },
       include: { category: true },

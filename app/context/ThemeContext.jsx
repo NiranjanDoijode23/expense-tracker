@@ -4,20 +4,20 @@ import { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("dark"); // default dark
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") return "dark";
+    return localStorage.getItem("theme") || "dark";
+  });
 
   useEffect(() => {
-    // Load saved theme from localStorage
-    const saved = localStorage.getItem("theme") || "dark";
-    setTheme(saved);
-    if (saved === "light") {
+    if (theme === "light") {
       document.documentElement.classList.add("light");
       document.documentElement.classList.remove("dark");
     } else {
       document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";

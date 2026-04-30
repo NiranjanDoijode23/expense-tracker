@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 // DELETE /api/budget/[id]
 export async function DELETE(req, { params }) {
   try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const budgetId = Number(params.id);
 
     const budget = await prisma.budget.findUnique({ where: { id: budgetId } });
     if (!budget) return NextResponse.json({ error: "Budget not found" }, { status: 404 });
-    if (budget.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (budget.userId !== authUser.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     await prisma.budget.delete({ where: { id: budgetId } });
 
@@ -30,18 +29,17 @@ export async function DELETE(req, { params }) {
 // PUT /api/budget/[id] — update budget amount
 export async function PUT(req, { params }) {
   try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const budgetId = Number(params.id);
     const { amount } = await req.json();
 
     const budget = await prisma.budget.findUnique({ where: { id: budgetId } });
     if (!budget) return NextResponse.json({ error: "Budget not found" }, { status: 404 });
-    if (budget.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (budget.userId !== authUser.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const updated = await prisma.budget.update({
       where: { id: budgetId },

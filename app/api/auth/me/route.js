@@ -1,22 +1,16 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 export async function GET(req) {
   try {
-    // Read token from cookie
-    const token = req.cookies.get("token")?.value;
-
-    if (!token) {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Decode the JWT to get userId
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Fetch user from DB using userId from token
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: authUser.id },
       select: {
         id: true,
         email: true,
@@ -42,4 +36,4 @@ export async function GET(req) {
     console.error(error);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-}
+} 

@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "../components/ThemeToggle";
+import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -74,6 +76,14 @@ export default function RegisterPage() {
           Start tracking your expenses today
         </p>
 
+        <button
+          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          className="w-full mb-5 flex items-center justify-center gap-3 bg-white text-slate-900 px-4 py-3 rounded-xl font-semibold hover:bg-slate-100 transition-colors"
+        >
+          <span className="text-lg">🟢</span>
+          Continue with Google
+        </button>
+
         {/* Error */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-sm mb-5">
@@ -145,9 +155,9 @@ export default function RegisterPage() {
         {/* Login link */}
         <p className="text-center text-white/30 text-[13px] mt-7">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-400 font-medium hover:text-blue-300 transition-colors">
+          <Link href="/login" className="text-blue-400 font-medium hover:text-blue-300 transition-colors">
             Sign in
-          </a>
+          </Link>
         </p>
 
       </div>

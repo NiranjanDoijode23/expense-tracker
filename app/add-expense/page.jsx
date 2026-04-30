@@ -3,6 +3,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
+function getLocalDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export default function AddExpensePage() {
   const router = useRouter();
@@ -10,7 +16,7 @@ export default function AddExpensePage() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(getLocalDateInputValue());
 
   const [categories, setCategories] = useState([]);
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -22,15 +28,16 @@ export default function AddExpensePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => { fetchCategories(); }, []);
-
-  const fetchCategories = async () => {
+  async function fetchCategories() {
     const res = await fetch("/api/category", { credentials: "include" });
     if (res.ok) {
       const data = await res.json();
       setCategories(data.categories || []);
     }
-  };
+  }
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchCategories(); }, []);
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;

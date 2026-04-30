@@ -1,28 +1,35 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
-import { NextURL } from "next/dist/server/web/next-url";
+import { getAuthenticatedUser } from "@/lib/auth";
+
+function parseDateInput(dateValue) {
+  if (!dateValue) return new Date();
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    const [year, month, day] = dateValue.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  }
+  return new Date(dateValue);
+}
 
 export async function POST(req) {
   try {
-    const token = req.cookies.get("token")?.value; // ✅ fixed - no destructuring
-
-    if (!token) {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-
     const { amount, categoryId, note, date } = await req.json();
+    if (!amount || Number(amount) <= 0) {
+      return NextResponse.json({ error: "Amount must be greater than 0" }, { status: 400 });
+    }
 
     const expense = await prisma.expense.create({
       data: {
         amount: parseFloat(amount),
         note: note || null,
         categoryId: categoryId ? Number(categoryId) : null,
-        date: date ? new Date(date) : new Date(),
-        userId,
+        date: parseDateInput(date),
+        userId: authUser.id,
       },
     });
 
@@ -36,14 +43,10 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-
-    if (!token) {
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
 
 
     const { searchParams } = new URL(req.url);
@@ -57,14 +60,14 @@ export async function GET(req) {
     const limit = parseInt(searchParams.get("limit")) || 5;
 
     const where = {
-      userId,
+      userId: authUser.id,
     }
     const categoryId = Number(category);
     if (categoryId) {
       where.categoryId = categoryId;
     }
 
-    if (from ||to) {
+    if (from || to) {
       where.date = {};
       if (from) where.date.gte = new Date(from);
       if (to) where.date.lte = new Date(to);
@@ -92,11 +95,11 @@ export async function GET(req) {
       orderBy,
       skip,
       take: limit,
-      include: { category: true }, // ✅ includes category name
+      include: { category: { select: { id: true, name: true } } },
     });
 
     const total = await prisma.expense.count({ where });
-  
+
 
     return NextResponse.json({ expenses, total, page, totalPages: Math.ceil(total / limit), }, { status: 200 }); // ✅ wrapped in object
 

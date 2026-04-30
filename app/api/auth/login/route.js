@@ -12,6 +12,13 @@ export async function POST(req) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "This account was created with Google. Please continue with Google." },
+        { status: 400 }
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
@@ -31,7 +38,7 @@ export async function POST(req) {
 
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24, // 1 day
       path: "/",

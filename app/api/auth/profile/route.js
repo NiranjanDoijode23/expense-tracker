@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import prisma from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 // GET /api/auth/profile — fetch profile stats
 export async function GET(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: authUser.id },
       select: {
         id: true,
         email: true,
@@ -31,11 +31,11 @@ export async function GET(req) {
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     // Calculate total amount spent
-    const expenses = await prisma.expense.findMany({
-      where: { userId: decoded.userId },
-      select: { amount: true },
+    const spending = await prisma.expense.aggregate({
+      where: { userId: authUser.id },
+      _sum: { amount: true },
     });
-    const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalSpent = spending._sum.amount || 0;
 
     return NextResponse.json({ user: { ...user, totalSpent } }, { status: 200 });
 
@@ -48,13 +48,14 @@ export async function GET(req) {
 // PUT /api/auth/profile — update name or password
 export async function PUT(req) {
   try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { name, currentPassword, newPassword } = await req.json();
 
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    const user = await prisma.user.findUnique({ where: { id: authUser.id } });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const updateData = {};
@@ -66,6 +67,12 @@ export async function PUT(req) {
 
     // Update password if provided
     if (newPassword) {
+      if (!user.password) {
+        return NextResponse.json(
+          { error: "This account uses Google sign-in. Set password from register flow first." },
+          { status: 400 }
+        );
+      }
       if (!currentPassword) {
         return NextResponse.json({ error: "Current password is required" }, { status: 400 });
       }
@@ -83,7 +90,7 @@ export async function PUT(req) {
     }
 
     const updated = await prisma.user.update({
-      where: { id: decoded.userId },
+      where: { id: authUser.id },
       data: updateData,
       select: { id: true, email: true, name: true },
     });

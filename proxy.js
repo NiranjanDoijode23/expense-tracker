@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { getToken } from "next-auth/jwt";
 
-export function proxy(req) {
+export async function proxy(req) {
   const { pathname } = req.nextUrl;
 
   // Allow public routes
@@ -14,6 +15,14 @@ export function proxy(req) {
   }
 
   const token = req.cookies.get("token")?.value;
+  const nextAuthToken = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  if (nextAuthToken) {
+    return NextResponse.next();
+  }
 
   if (!token) {
     if (pathname.startsWith("/api")) {
