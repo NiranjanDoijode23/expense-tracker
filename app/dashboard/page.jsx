@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import ExpenseCharts from "../components/ExpenseCharts";
 import { exportCSV, exportExcel } from "@/lib/exportExpenses"; // ✅ import export utils
 import ThemeToggle from "../components/ThemeToggle";
+import toast from "react-hot-toast"; // ✅ add this
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -18,6 +20,9 @@ export default function DashboardPage() {
   const [deletingId, setDeletingId] = useState(null);
   const [activeTab, setActiveTab] = useState("expenses");
   const [exporting, setExporting] = useState(false); // ✅ export loading state
+  const [confirmDelete, setConfirmDelete] = useState(null); // { type: "expense"|"budget", id, name }
+
+
 
   // Edit expense state
   const [editingExpense, setEditingExpense] = useState(null);
@@ -114,17 +119,67 @@ export default function DashboardPage() {
     router.push("/login");
   };
 
-  const handleDelete = async (id) => {
-    setDeletingId(id);
-    const res = await fetch(`/api/expense/${id}`, { method: "DELETE", credentials: "include" });
-    if (res.ok) {
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
-      setAllExpenses((prev) => prev.filter((e) => e.id !== id)); // ✅ also remove from allExpenses
-      refreshAnalytics();
-      refreshBudgets();
-    }
-    setDeletingId(null);
+  const handleDelete = (expense) => {
+    setConfirmDelete({
+      type: "expense",
+      id: expense.id,
+      name: expense.note || "this expense",
+    });
   };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+
+    if (confirmDelete.type === "expense") {
+      setDeletingId(confirmDelete.id);
+      const res = await fetch(`/api/expense/${confirmDelete.id}`, {
+        method: "DELETE", credentials: "include",
+      });
+      if (res.ok) {
+        setExpenses((prev) => prev.filter((e) => e.id !== confirmDelete.id));
+        setAllExpenses((prev) => prev.filter((e) => e.id !== confirmDelete.id));
+        refreshAnalytics();
+        refreshBudgets();
+        toast.success("Expense deleted");
+      } else {
+        toast.error("Failed to delete expense");
+      }
+      setDeletingId(null);
+    }
+
+    if (confirmDelete.type === "budget") {
+      setDeletingBudgetId(confirmDelete.id);
+      const res = await fetch(`/api/budget/${confirmDelete.id}`, {
+        method: "DELETE", credentials: "include",
+      });
+      if (res.ok) {
+        setBudgets((prev) => prev.filter((b) => b.id !== confirmDelete.id));
+        toast.success("Budget deleted");
+      } else {
+        toast.error("Failed to delete budget");
+      }
+      setDeletingBudgetId(null);
+    }
+
+    setConfirmDelete(null);
+  };
+
+
+  // const handleDelete = async (id) => {
+  //   setDeletingId(id);
+  //   const res = await fetch(`/api/expense/${id}`, { method: "DELETE", credentials: "include" });
+  //   if (res.ok) {
+  //     setExpenses((prev) => prev.filter((e) => e.id !== id));
+  //     setAllExpenses((prev) => prev.filter((e) => e.id !== id)); // ✅ also remove from allExpenses
+  //     refreshAnalytics();
+  //     refreshBudgets();
+  //     toast.success("Expense deleted");
+  //   }
+  //   else {
+  //     toast.error("Failed to delete expense");
+  //   }
+  //   setDeletingId(null);
+  // };
 
   const openEdit = (expense) => {
     setEditingExpense(expense);
@@ -157,7 +212,7 @@ export default function DashboardPage() {
     const data = await res.json();
     setUpdating(false);
 
-    if (!res.ok) { setEditError(data.error || "Failed to update expense"); return; }
+    if (!res.ok) { toast.error(data.error || "Failed to update expense"); return; }
 
     const updatedFields = {
       ...editingExpense,
@@ -172,7 +227,10 @@ export default function DashboardPage() {
     setAllExpenses((prev) => prev.map((exp) => exp.id === editingExpense.id ? updatedFields : exp)); // ✅
     refreshAnalytics();
     refreshBudgets();
+    toast.success("Expense updated!");
     closeEdit();
+
+
   };
 
   const handleAddBudget = async (e) => {
@@ -195,19 +253,38 @@ export default function DashboardPage() {
     const data = await res.json();
     setAddingBudget(false);
 
-    if (!res.ok) { setBudgetError(data.error || "Failed to add budget"); return; }
+    if (!res.ok) { toast.error(data.error || "Failed to add budget"); return; }
 
+    toast.success("Budget set! 🎯");
     setBudgetAmount("");
     setBudgetCategoryId("");
     refreshBudgets();
+
   };
 
-  const handleDeleteBudget = async (id) => {
-    setDeletingBudgetId(id);
-    const res = await fetch(`/api/budget/${id}`, { method: "DELETE", credentials: "include" });
-    if (res.ok) setBudgets((prev) => prev.filter((b) => b.id !== id));
-    setDeletingBudgetId(null);
+  const handleDeleteBudget = (budget) => {
+    setConfirmDelete({
+      type: "budget",
+      id: budget.id,
+      name: `${budget.category?.name || "Overall"} budget`,
+    });
   };
+
+
+
+
+  // const handleDeleteBudget = async (id) => {
+  //   setDeletingBudgetId(id);
+  //   const res = await fetch(`/api/budget/${id}`, { method: "DELETE", credentials: "include" });
+  //   if (res.ok) {
+  //     setBudgets((prev) => prev.filter((b) => b.id !== id));
+  //     toast.success("Budget deleted");
+  //   }
+  //   else {
+  //     toast.error("Failed to delete budget");
+  //   }
+
+  // };
 
   const totalAmount = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
   const thisMonth = expenses
@@ -250,16 +327,16 @@ export default function DashboardPage() {
   );
 
   const stats = [
-    { label: "Total Spent",  value: `₹${totalAmount.toFixed(2)}`, icon: "📊", color: "text-blue-400"    },
-    { label: "This Month",   value: `₹${thisMonth.toFixed(2)}`,   icon: "📅", color: "text-violet-400"  },
-    { label: "Transactions", value: allExpenses.length,            icon: "🧾", color: "text-emerald-400" },
-    { label: "Budgets",      value: budgets.length,                icon: "🎯", color: "text-amber-400"   },
+    { label: "Total Spent", value: `₹${totalAmount.toFixed(2)}`, icon: "📊", color: "text-blue-400" },
+    { label: "This Month", value: `₹${thisMonth.toFixed(2)}`, icon: "📅", color: "text-violet-400" },
+    { label: "Transactions", value: allExpenses.length, icon: "🧾", color: "text-emerald-400" },
+    { label: "Budgets", value: budgets.length, icon: "🎯", color: "text-amber-400" },
   ];
 
   const tabs = [
-    { key: "expenses",  label: "🧾 Expenses"  },
+    { key: "expenses", label: "🧾 Expenses" },
     { key: "analytics", label: "📊 Analytics" },
-    { key: "budget",    label: "🎯 Budget"    },
+    { key: "budget", label: "🎯 Budget" },
   ];
 
   return (
@@ -281,15 +358,15 @@ export default function DashboardPage() {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-10 py-[18px] border-b border-white/[0.06] bg-[rgba(10,10,15,0.85)] backdrop-blur-xl">
         <div className="flex items-center gap-2.5 cursor-pointer">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-lg"><button className="cursor-pointer"onClick={(e)=>router.push("/dashboard")}>💸</button></div>
-          <span className="font-semibold text-base"><button className="cursor-pointer" onClick={(e)=>router.push("/dashboard")}>ExpenseTrack </button> </span>
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-lg"><button className="cursor-pointer" onClick={(e) => router.push("/dashboard")}>💸</button></div>
+          <span className="font-semibold text-base"><button className="cursor-pointer" onClick={(e) => router.push("/dashboard")}>ExpenseTrack </button> </span>
         </div>
         <div className="flex items-center gap-3.5">
           <div className="flex items-center gap-2.5 cursor-pointer">
-           <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-[13px] font-bold"><button onClick={(e)=>router.push("/profile")} className="cursor-pointer"> {getInitials()}</button></div>
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-[13px] font-bold"><button onClick={(e) => router.push("/profile")} className="cursor-pointer"> {getInitials()}</button></div>
             <div>
-              <div className="text-[13px] font-medium"> <button className="cursor-pointer" onClick={(e)=>router.push("/profile")}>{getDisplayName()} </button></div>
-              <div className="text-[11px] text-white/35"> <button className="cursor-pointer" onClick={(e)=>router.push("/profile")}>{user?.email}</button></div>
+              <div className="text-[13px] font-medium"> <button className="cursor-pointer" onClick={(e) => router.push("/profile")}>{getDisplayName()} </button></div>
+              <div className="text-[11px] text-white/35"> <button className="cursor-pointer" onClick={(e) => router.push("/profile")}>{user?.email}</button></div>
             </div>
           </div>
           <ThemeToggle />
@@ -349,17 +426,69 @@ export default function DashboardPage() {
           ))}
         </div>
 
+        {/* ✅ Budget Alert Banner */}
+        {(() => {
+          const exceeded = budgets.filter(b => b.percentage >= 100);
+          const warning = budgets.filter(b => b.percentage >= 80 && b.percentage < 100);
+
+          if (exceeded.length === 0 && warning.length === 0) return null;
+
+          return (
+            <div className="flex flex-col gap-2 mb-6 animate-fade-up">
+              {/* 🚨 Exceeded budgets */}
+              {exceeded.map((b) => (
+                <div key={b.id} className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-3.5">
+                  <span className="text-lg">🚨</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-red-300 text-[13px] font-medium">
+                      <span className="font-bold">{b.category?.name || "Overall"}</span> budget exceeded!
+                      You're ₹{Math.abs(b.remaining).toFixed(2)} over your ₹{b.amount.toFixed(2)} limit
+                      for {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][b.month - 1]}.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("budget")}
+                    className="text-red-400 text-[12px] font-medium hover:text-red-300 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    View →
+                  </button>
+                </div>
+              ))}
+
+              {/* ⚠️ Warning budgets */}
+              {warning.map((b) => (
+                <div key={b.id} className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-3.5">
+                  <span className="text-lg">⚠️</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-amber-300 text-[13px] font-medium">
+                      <span className="font-bold">{b.category?.name || "Overall"}</span> budget is{" "}
+                      <span className="font-bold">{b.percentage.toFixed(0)}% used</span>.
+                      Only ₹{b.remaining.toFixed(2)} remaining for{" "}
+                      {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][b.month - 1]}.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("budget")}
+                    className="text-amber-400 text-[12px] font-medium hover:text-amber-300 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    View →
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         {/* Tabs */}
         <div className="flex gap-2 mb-6 animate-fade-up">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-all cursor-pointer ${
-                activeTab === tab.key
-                  ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]"
-                  : "bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]"
-              }`}
+              className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-all cursor-pointer ${activeTab === tab.key
+                ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                : "bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]"
+                }`}
             >
               {tab.label}
             </button>
@@ -443,7 +572,7 @@ export default function DashboardPage() {
                           <p className="text-white/35 text-[12px]">{MONTHS[budget.month - 1]} {budget.year}</p>
                         </div>
                         <button
-                          onClick={() => handleDeleteBudget(budget.id)}
+                          onClick={() => handleDeleteBudget(budget)}
                           disabled={deletingBudgetId === budget.id}
                           className="bg-red-500/[0.08] border border-red-500/20 text-red-300 text-[11px] px-3 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-40"
                         >
@@ -554,7 +683,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2.5 shrink-0">
                       <span className="text-[16px] font-bold text-red-400">-₹{(expense.amount ?? 0).toFixed(2)}</span>
                       <button onClick={() => openEdit(expense)} className="bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[12px] px-3.5 py-1.5 rounded-lg hover:bg-blue-500/20 transition-colors cursor-pointer">Edit</button>
-                      <button onClick={() => handleDelete(expense.id)} disabled={deletingId === expense.id}
+                      <button onClick={() => handleDelete(expense)} disabled={deletingId === expense.id}
                         className="bg-red-500/[0.08] border border-red-500/20 text-red-300 text-[12px] px-3.5 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                         {deletingId === expense.id ? "..." : "Delete"}
                       </button>
@@ -625,6 +754,49 @@ export default function DashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ✅ Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            className="w-full max-w-[400px] bg-[#13131f] border border-white/10 rounded-3xl p-8 animate-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div className="w-14 h-14 bg-red-500/15 border border-red-500/25 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5">
+              🗑️
+            </div>
+
+            {/* Text */}
+            <h2 className="text-[18px] font-bold text-center mb-2">
+              Delete {confirmDelete.type === "expense" ? "Expense" : "Budget"}?
+            </h2>
+            <p className="text-white/40 text-[13px] text-center mb-7 leading-relaxed">
+              Are you sure you want to delete{" "}
+              <span className="text-white font-medium">"{confirmDelete.name}"</span>?
+              <br />This action cannot be undone.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-3 bg-white/[0.04] border border-white/10 rounded-xl text-white/50 text-[14px] font-medium hover:bg-white/[0.08] transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteAction}
+                className="flex-1 py-3 bg-red-500/90 hover:bg-red-500 text-white text-[14px] font-semibold rounded-xl transition-all cursor-pointer"
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

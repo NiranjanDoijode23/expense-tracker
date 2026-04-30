@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "../components/ThemeToggle";
+import toast from "react-hot-toast";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -49,10 +50,10 @@ export default function ProfilePage() {
     setSavingName(false);
 
     if (!res.ok) {
-      setNameMsg({ type: "error", text: data.error || "Failed to update name" });
+      toast.error(data.error || "Failed to update name")
     } else {
       setUser((prev) => ({ ...prev, name: data.user.name }));
-      setNameMsg({ type: "success", text: "Name updated successfully!" });
+      toast.success("Name updated! ✅");
     }
   };
 
@@ -84,9 +85,10 @@ export default function ProfilePage() {
     setSavingPassword(false);
 
     if (!res.ok) {
-      setPasswordMsg({ type: "error", text: data.error || "Failed to change password" });
+      toast.error(data.error || "Failed to change password");
+
     } else {
-      setPasswordMsg({ type: "success", text: "Password changed successfully!" });
+      toast.success("Password changed successfully! 🔒");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -140,9 +142,9 @@ export default function ProfilePage() {
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-10 py-[18px] border-b border-white/[0.06] bg-[rgba(10,10,15,0.85)] backdrop-blur-xl">
-  <div className="flex items-center gap-2.5 cursor-pointer">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-lg"><button className="cursor-pointer"onClick={(e)=>router.push("/dashboard")}>💸</button></div>
-          <span className="font-semibold text-base"><button className="cursor-pointer" onClick={(e)=>router.push("/dashboard")}>ExpenseTrack </button> </span>
+        <div className="flex items-center gap-2.5 cursor-pointer">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-lg"><button className="cursor-pointer" onClick={(e) => router.push("/dashboard")}>💸</button></div>
+          <span className="font-semibold text-base"><button className="cursor-pointer" onClick={(e) => router.push("/dashboard")}>ExpenseTrack </button> </span>
         </div>
         <div className="flex items-center gap-3">
           {/* Theme Toggle */}
@@ -188,9 +190,9 @@ export default function ProfilePage() {
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Total Spent",   value: `₹${(user?.totalSpent ?? 0).toFixed(2)}`, icon: "💸" },
-              { label: "Transactions",  value: user?._count?.expenses ?? 0,               icon: "🧾" },
-              { label: "Categories",    value: user?._count?.categories ?? 0,             icon: "🗂️"  },
+              { label: "Total Spent", value: `₹${(user?.totalSpent ?? 0).toFixed(2)}`, icon: "💸" },
+              { label: "Transactions", value: user?._count?.expenses ?? 0, icon: "🧾" },
+              { label: "Categories", value: user?._count?.categories ?? 0, icon: "🗂️" },
             ].map((s, i) => (
               <div key={i} className="bg-white/[0.06] border border-white/[0.08] rounded-xl p-4 text-center">
                 <div className="text-xl mb-1.5">{s.icon}</div>
@@ -207,11 +209,10 @@ export default function ProfilePage() {
           <p className="text-white/30 text-[13px] mb-6">This name shows on your dashboard</p>
 
           {nameMsg && (
-            <div className={`rounded-xl px-4 py-3 text-[13px] mb-5 ${
-              nameMsg.type === "success"
+            <div className={`rounded-xl px-4 py-3 text-[13px] mb-5 ${nameMsg.type === "success"
                 ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
                 : "bg-red-500/10 border border-red-500/30 text-red-300"
-            }`}>
+              }`}>
               {nameMsg.text}
             </div>
           )}
@@ -240,11 +241,10 @@ export default function ProfilePage() {
           <p className="text-white/30 text-[13px] mb-6">Enter your current password to set a new one</p>
 
           {passwordMsg && (
-            <div className={`rounded-xl px-4 py-3 text-[13px] mb-5 ${
-              passwordMsg.type === "success"
+            <div className={`rounded-xl px-4 py-3 text-[13px] mb-5 ${passwordMsg.type === "success"
                 ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
                 : "bg-red-500/10 border border-red-500/30 text-red-300"
-            }`}>
+              }`}>
               {passwordMsg.text}
             </div>
           )}
@@ -302,11 +302,10 @@ export default function ProfilePage() {
                 placeholder="Repeat new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`w-full bg-white/[0.05] border rounded-xl px-4 py-3 text-white text-[14px] placeholder-white/25 outline-none focus:border-blue-400/50 transition-all ${
-                  confirmPassword && confirmPassword !== newPassword
+                className={`w-full bg-white/[0.05] border rounded-xl px-4 py-3 text-white text-[14px] placeholder-white/25 outline-none focus:border-blue-400/50 transition-all ${confirmPassword && confirmPassword !== newPassword
                     ? "border-red-500/50"
                     : "border-white/10"
-                }`}
+                  }`}
                 required
               />
               {/* Match indicator */}

@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
 
 export default function AddExpensePage() {
   const router = useRouter();
@@ -45,7 +47,11 @@ export default function AddExpensePage() {
     const data = await res.json();
     setAddingCategory(false);
 
-    if (!res.ok) { setCategoryError(data.error || "Failed to add category"); return; }
+    if (!res.ok) {
+      toast.error(data.error || "Failed to add expense");
+      return;
+    }
+    toast.success("Expense added! 🧾"); // ✅
 
     setCategories((prev) => [...prev, data.category].sort((a, b) => a.name.localeCompare(b.name)));
     setCategoryId(String(data.category.id));
@@ -68,9 +74,12 @@ export default function AddExpensePage() {
     const data = await res.json();
     setSubmitting(false);
 
-    if (!res.ok) { setError(data.error || "Failed to add expense"); return; }
-
-    setSuccess(true);
+    if (!res.ok) { 
+       toast.error(data.error || "Failed to add expense");
+      setError(data.error || "Failed to add expense"); return; 
+    }
+    toast.success("Expense added! 🧾");
+    // setSuccess(true);
     setTimeout(() => router.push("/dashboard"), 1200);
   };
 
