@@ -39,7 +39,9 @@ export async function POST(req) {
 
     // ✅ Set cookie directly on the response object — most reliable method
     const response = NextResponse.json(
-      { message: "Login successful" },
+      { message: "Login successful",
+        token:token,
+       },
       { status: 200 }
     );
 
