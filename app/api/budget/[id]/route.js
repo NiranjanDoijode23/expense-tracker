@@ -10,7 +10,14 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const budgetId = Number(params.id);
+    // ✅ Fix — await params before accessing .id (Next.js 15 requirement)
+    const { id } = await params;
+    const budgetId = Number(id);
+
+    // ✅ Extra safety — check if id is valid number
+    if (isNaN(budgetId)) {
+      return NextResponse.json({ error: "Invalid budget ID" }, { status: 400 });
+    }
 
     const budget = await prisma.budget.findUnique({ where: { id: budgetId } });
     if (!budget) return NextResponse.json({ error: "Budget not found" }, { status: 404 });
@@ -34,7 +41,15 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const budgetId = Number(params.id);
+    // ✅ Fix — await params before accessing .id (Next.js 15 requirement)
+    const { id } = await params;
+    const budgetId = Number(id);
+
+    // ✅ Extra safety — check if id is valid number
+    if (isNaN(budgetId)) {
+      return NextResponse.json({ error: "Invalid budget ID" }, { status: 400 });
+    }
+
     const { amount } = await req.json();
 
     const budget = await prisma.budget.findUnique({ where: { id: budgetId } });

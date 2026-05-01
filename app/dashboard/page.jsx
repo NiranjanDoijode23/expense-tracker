@@ -296,28 +296,44 @@ const handleAddBudget = async (e) => {
 };
 
 
-  const handleDeleteBudget = async (budget) => {
-    const confirmed = window.confirm(`Delete ${budget.category?.name || "Overall"} budget?`);
-    if (!confirmed) return;
-    setDeletingBudgetId(budget.id);
-    try {
-      const res = await fetch(`/api/budget/${encodeURIComponent(budget.id)}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Failed to delete budget");
-        return;
-      }
-      setBudgets((prev) => prev.filter((b) => b.id !== budget.id));
-      toast.success("Budget deleted");
-    } finally {
-      setDeletingBudgetId(null);
+const handleDeleteBudget = async (budget) => {
+ setConfirmDelete({
+    type: "budget",
+    id: budget.id,
+    name: `${budget.category?.name || "Overall"} budget for ${MONTHS[budget.month - 1]} ${budget.year}`,
+  });
+};
+
+// ✅ Add this new function — called when user clicks "Yes Delete"
+const confirmDeleteBudget = async () => {
+  if (!confirmDelete) return;
+  setDeletingBudgetId(confirmDelete.id);
+
+  try {
+    const res = await fetch(`/api/budget/${confirmDelete.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || "Failed to delete budget");
+      return;
     }
-  };
 
+    setBudgets((prev) => prev.filter((b) => b.id !== confirmDelete.id));
+    toast.success("Budget deleted");
 
+  } catch (error) {
+    console.error(error);
+    toast.error("Something went wrong");
+  } finally {
+    setDeletingBudgetId(null);
+    setConfirmDelete(null); // ✅ close modal
+  }
+};
+
+ 
 
 
   // const handleDeleteBudget = async (id) => {
@@ -480,6 +496,59 @@ const handleAddBudget = async (e) => {
             <h3 className="font-data-display text-data-display text-white mt-1">{activeBudgetSummary}</h3>
           </div>
         </div>
+
+        {/* ✅ Budget Alert Banner */}
+{(() => {
+  const exceeded = budgets.filter(b => b.percentage >= 100);
+  const warning  = budgets.filter(b => b.percentage >= 80 && b.percentage < 100);
+
+  if (exceeded.length === 0 && warning.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2 mb-6 animate-fade-up">
+      {/* 🚨 Exceeded budgets */}
+      {exceeded.map((b) => (
+        <div key={b.id} className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-3.5">
+          <span className="text-lg">🚨</span>
+          <div className="flex-1 min-w-0">
+            <span className="text-red-300 text-[13px] font-medium">
+              <span className="font-bold">{b.category?.name || "Overall"}</span> budget exceeded!
+              You're ₹{Math.abs(b.remaining).toFixed(2)} over your ₹{b.amount.toFixed(2)} limit
+              for {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][b.month - 1]}.
+            </span>
+          </div>
+          <button
+            onClick={() => setActiveTab("budget")}
+            className="text-red-400 text-[12px] font-medium hover:text-red-300 transition-colors cursor-pointer whitespace-nowrap"
+          >
+            View →
+          </button>
+        </div>
+      ))}
+
+      {/* ⚠️ Warning budgets */}
+      {warning.map((b) => (
+        <div key={b.id} className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-3.5">
+          <span className="text-lg">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <span className="text-amber-300 text-[13px] font-medium">
+              <span className="font-bold">{b.category?.name || "Overall"}</span> budget is{" "}
+              <span className="font-bold">{b.percentage.toFixed(0)}% used</span>.
+              Only ₹{b.remaining.toFixed(2)} remaining for{" "}
+              {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][b.month - 1]}.
+            </span>
+          </div>
+          <button
+            onClick={() => setActiveTab("budget")}
+            className="text-amber-400 text-[12px] font-medium hover:text-amber-300 transition-colors cursor-pointer whitespace-nowrap"
+          >
+            View →
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+})()}
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 animate-fade-up">
@@ -845,6 +914,56 @@ const handleAddBudget = async (e) => {
           onClose={() => setUpgradePrompt(null)}
         />
       )}
+
+      {/* ── DELETE CONFIRMATION MODAL ── */}
+{confirmDelete && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm"
+    onClick={() => setConfirmDelete(null)}
+  >
+    <div
+      className="w-full max-w-[400px] bg-[#13131f] border border-white/10 rounded-3xl p-8 text-center animate-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Icon */}
+      <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5">
+        🗑️
+      </div>
+
+      {/* Text */}
+      <h2 className="text-[19px] font-bold text-white mb-2">
+        Delete Budget?
+      </h2>
+      <p className="text-white/40 text-[13px] leading-relaxed mb-7">
+        Are you sure you want to delete{" "}
+        <span className="text-white font-semibold">"{confirmDelete.name}"</span>?
+        <br />
+        <span className="text-red-400/70 text-[12px] mt-1 inline-block">
+          This action cannot be undone.
+        </span>
+      </p>
+
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => setConfirmDelete(null)}
+          className="flex-1 py-3 bg-white/[0.04] border border-white/10 rounded-xl text-white/50 text-[14px] font-medium hover:bg-white/[0.08] active:scale-95 transition-all duration-150 cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={confirmDeleteBudget}
+          disabled={deletingBudgetId === confirmDelete.id}
+          className="flex-1 py-3 bg-red-500/90 hover:bg-red-500 active:scale-95 text-white text-[14px] font-semibold rounded-xl transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {deletingBudgetId === confirmDelete.id ? "Deleting..." : "Yes, Delete"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 }

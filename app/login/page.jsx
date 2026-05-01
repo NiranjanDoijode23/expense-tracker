@@ -60,7 +60,7 @@ export default function LoginPage() {
       `}</style>
       <header className="sticky top-0 w-full z-50 border-b bg-[#0d0d14]/80 backdrop-blur-xl border-white/5 shadow-2xl shadow-indigo-500/10">
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 max-w-7xl mx-auto">
-          <div className="text-xl font-bold tracking-tighter text-white font-h2">SpEndora</div>
+          <div className="text-xl font-bold tracking-tighter text-white font-h2"><button className="cursor-pointer" onClick={(e)=>router.push("/")}>SpEndora</button> </div>
           <div className="hidden md:flex items-center space-x-8">
             <button onClick={() => router.push("/")} className="text-gray-400 hover:text-white transition-colors duration-200 font-caption">Expenses</button>
             <button onClick={() => router.push("/")} className="text-gray-400 hover:text-white transition-colors duration-200 font-caption">Analytics</button>
