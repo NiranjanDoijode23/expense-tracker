@@ -297,16 +297,31 @@ export default function LandingPage() {
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .expense-item:last-child { border-bottom: none; }
+
+        .landing-nav { padding: 20px 60px !important; }
+        .landing-nav-links { display: flex; align-items: center; gap: 36px; }
+        .landing-nav-actions { display: flex; align-items: center; gap: 12px; }
+
+        @media (max-width: 900px) {
+          .landing-nav { padding: 14px 16px !important; }
+          .landing-nav-links { display: none !important; }
+          .landing-nav-actions button { padding: 9px 12px !important; font-size: 12px !important; }
+        }
+        .stitch-hero {
+          background-color: #050508;
+          background-image:
+            radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(47, 217, 244, 0.08) 0px, transparent 50%);
+        }
       `}</style>
 
       {/* Noise overlay */}
       <div className="noise" />
 
       {/* ── NAVBAR ── */}
-      <nav style={{
+      <nav className="landing-nav" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "20px 60px",
         background: scrollY > 50 ? "rgba(6,6,18,0.9)" : "transparent",
         backdropFilter: scrollY > 50 ? "blur(20px)" : "none",
         borderBottom: scrollY > 50 ? "1px solid rgba(255,255,255,0.06)" : "none",
@@ -320,22 +335,22 @@ export default function LandingPage() {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 20,
           }}>💸</div>
-          <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.3px" }}>ExpenseTrack</span>
+          <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.3px" }}>SpEndora</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
+        <div className="landing-nav-links">
           <a href="#features" className="nav-link">Features</a>
           <a href="#how" className="nav-link">How it works</a>
           <a href="#stats" className="nav-link">Why us</a>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="landing-nav-actions">
           <ThemeToggle />
           <button className="btn-ghost" onClick={() => router.push("/login")} style={{ padding: "10px 22px", fontSize: 14 }}>
             Sign in
           </button>
           <button className="btn-primary" onClick={() => router.push("/register")} style={{ padding: "10px 22px", fontSize: 14 }}>
-            Get started free
+            Get Started
           </button>
         </div>
       </nav>
@@ -348,10 +363,10 @@ export default function LandingPage() {
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
-        padding: "120px 24px 80px",
+        padding: "100px 16px 72px",
         position: "relative",
         overflow: "hidden",
-      }} className="grid-bg">
+      }} className="grid-bg stitch-hero">
 
         {/* Glows */}
         <div className="glow-blue" style={{ width: 700, height: 700, top: -100, left: "50%", transform: "translateX(-50%)" }} />
@@ -384,13 +399,13 @@ export default function LandingPage() {
           maxWidth: 560, lineHeight: 1.7, marginBottom: 48,
           fontWeight: 300,
         }}>
-          ExpenseTrack makes budgeting effortless — log expenses, create categories, and visualize your spending in real time.
+          Experience financial clarity with a precise expense tracker. Log entries, track budgets, and analyze spending in real time.
         </p>
 
         {/* CTAs */}
         <div className="hero-animate-4" style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", marginBottom: 80 }}>
           <button className="btn-primary" onClick={() => router.push("/register")} style={{ padding: "16px 40px", fontSize: 16 }}>
-            Start tracking free →
+            Start Your Journey
           </button>
           <button className="btn-ghost" onClick={() => router.push("/login")} style={{ padding: "16px 40px", fontSize: 16 }}>
             Sign in
@@ -487,7 +502,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── FEATURES ── */}
-      <section id="features" style={{ padding: "120px 60px", maxWidth: 1200, margin: "0 auto" }}>
+      <section id="features" style={{ padding: "100px 16px", maxWidth: 1200, margin: "0 auto" }}>
         <div
           id="feat-header"
           data-animate
@@ -533,7 +548,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how" style={{ padding: "120px 60px", position: "relative", overflow: "hidden" }}>
+      <section id="how" style={{ padding: "100px 16px", position: "relative", overflow: "hidden" }}>
         <div className="glow-purple" style={{ width: 600, height: 600, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} />
 
         <div
@@ -584,7 +599,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── STATS ── */}
-      <section id="stats" style={{ padding: "100px 60px", maxWidth: 1100, margin: "0 auto" }}>
+      <section id="stats" style={{ padding: "90px 16px", maxWidth: 1100, margin: "0 auto" }}>
         <div
           id="stats-header"
           data-animate
@@ -697,21 +712,21 @@ export default function LandingPage() {
       {/* ── FOOTER ── */}
       <footer style={{
         borderTop: "1px solid rgba(255,255,255,0.06)",
-        padding: "40px 60px",
+        padding: "28px 16px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         flexWrap: "wrap", gap: 16,
         background: "rgba(255,255,255,0.01)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>💸</div>
-          <span style={{ fontWeight: 700, fontSize: 15 }}>ExpenseTrack</span>
+          <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>₹</div>
+          <span style={{ fontWeight: 700, fontSize: 15 }}>SpEndora</span>
         </div>
         <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 13 }}>
-          © 2026 ExpenseTrack. Built with Next.js & Prisma.
+          © 2024 SpEndora. Precision Finance.
         </p>
         <div style={{ display: "flex", gap: 24 }}>
-          <a href="/login" className="nav-link" style={{ fontSize: 13 }}>Login</a>
-          <a href="/register" className="nav-link" style={{ fontSize: 13 }}>Register</a>
+          <a href="#" className="nav-link" style={{ fontSize: 13 }}>Privacy</a>
+          <a href="#" className="nav-link" style={{ fontSize: 13 }}>Terms</a>
         </div>
       </footer>
     </div>

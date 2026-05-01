@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#34343d",
+                    "on-tertiary-container": "#000608",
+                    "surface-container-high": "#292932",
+                    "inverse-surface": "#e4e1ed",
+                    "tertiary-fixed-dim": "#2fd9f4",
+                    "on-primary": "#1000a9",
+                    "error": "#ffb4ab",
+                    "inverse-primary": "#494bd6",
+                    "surface-variant": "#34343d",
+                    "on-secondary": "#3c0091",
+                    "tertiary-container": "#008395",
+                    "surface": "#13131b",
+                    "inverse-on-surface": "#303038",
+                    "on-background": "#e4e1ed",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "surface-container": "#1f1f27",
+                    "on-secondary-container": "#c4abff",
+                    "on-tertiary-fixed-variant": "#004e5a",
+                    "surface-dim": "#13131b",
+                    "on-secondary-fixed": "#23005c",
+                    "primary": "#c0c1ff",
+                    "outline-variant": "#464554",
+                    "primary-container": "#8083ff",
+                    "secondary-container": "#571bc1",
+                    "surface-container-low": "#1b1b23",
+                    "primary-fixed": "#e1e0ff",
+                    "background": "#13131b",
+                    "on-primary-container": "#0d0096",
+                    "error-container": "#93000a",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "secondary": "#d0bcff",
+                    "on-surface-variant": "#c7c4d7",
+                    "on-tertiary": "#00363e",
+                    "surface-container-lowest": "#0d0d15",
+                    "tertiary-fixed": "#a2eeff",
+                    "outline": "#908fa0",
+                    "surface-bright": "#393841",
+                    "on-error": "#690005",
+                    "secondary-fixed-dim": "#d0bcff",
+                    "on-primary-fixed": "#07006c",
+                    "secondary-fixed": "#e9ddff",
+                    "on-error-container": "#ffdad6",
+                    "tertiary": "#2fd9f4",
+                    "on-tertiary-fixed": "#001f25",
+                    "on-surface": "#e4e1ed",
+                    "surface-tint": "#c0c1ff",
+                    "on-secondary-fixed-variant": "#5516be"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "xl": "3rem",
+                    "lg": "2rem",
+                    "sm": "1rem",
+                    "md": "1.5rem",
+                    "unit": "4px",
+                    "xs": "0.5rem",
+                    "margin": "32px"
+            },
+            "fontFamily": {
+                    "caption": ["Inter"],
+                    "body-main": ["Inter"],
+                    "data-display": ["Space Grotesk"],
+                    "body-sm": ["Inter"],
+                    "h1": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "caption": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-main": ["16px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                    "data-display": ["24px", {"lineHeight": "1", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h1": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                    "h2": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(13, 13, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        .bg-mesh {
+            background-color: #050508;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(47, 217, 244, 0.1) 0px, transparent 50%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-mesh min-h-screen flex flex-col font-body-main text-on-background selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="sticky top-0 w-full z-50 border-b border-white/5 bg-[#0d0d14]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/10">
+<div class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
+<div class="text-xl font-bold tracking-tighter text-white flex items-center gap-2">
+<span class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6366f1] to-[#2fd9f4] flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">account_balance_wallet</span>
+</span>
+                SpEndora
+            </div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-gray-400 hover:text-white transition-colors duration-200 font-caption" href="#">Expenses</a>
+<a class="text-gray-400 hover:text-white transition-colors duration-200 font-caption" href="#">Analytics</a>
+<a class="text-gray-400 hover:text-white transition-colors duration-200 font-caption" href="#">Budget</a>
+</div>
+<div class="flex items-center gap-4">
+<a class="text-gray-400 hover:text-white transition-colors duration-200 font-caption" href="#">Sign In</a>
+<button class="bg-[#6366f1] text-white px-5 py-2 rounded-lg font-caption hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-indigo-500/20">
+                    Get Started
+                </button>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow flex items-center justify-center px-6 py-12">
+<div class="w-full max-w-[480px] glass-card rounded-xl p-8 md:p-10 shadow-2xl">
+<header class="text-center mb-8">
+<h1 class="font-h2 text-h2 text-white mb-2">Create Account</h1>
+<p class="font-body-sm text-on-surface-variant">Precision finance starts with your first entry.</p>
+</header>
+<!-- OAuth Buttons -->
+<div class="grid grid-cols-2 gap-4 mb-8">
+<button class="flex items-center justify-center gap-2 py-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 active:scale-[0.98] transition-all group">
+<img alt="Google" class="w-5 h-5" data-alt="The official Google logo icon in its high-resolution multi-colored format against a clean transparent background. The image is designed to represent secure third-party authentication services within a high-end financial application. The visual style is crisp and modern, fitting perfectly within a professional dark-themed user interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEbZirD6aUjcQsCiKC7N2ilnu8TzdJ2mwrYR0TsSpVHV0_KmooCY4KbCeWLqyjn0rkFTmqTe3gOnPcA-jL6ReDI4ZP1tjLSfdmZU_B4ruEVA3Ifv23Jo1Um8aqcNyFdfWI6Ky32XkxFOsi0xsxfUpVRVGrh0b1GDctIzdfNWgtIJHTtwH9gM9dXti6C0twqdnhSLHBRTkD6kzRWYGbz1mSItGAl9jGHgYXW5xo2HGY7H1QrRkRiGSSsIMSo47onCsC6-GezIom8-3M"/>
+<span class="font-caption text-white">Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 active:scale-[0.98] transition-all group">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">ios</span>
+<span class="font-caption text-white">Apple</span>
+</button>
+</div>
+<div class="relative flex items-center mb-8">
+<div class="flex-grow border-t border-white/5"></div>
+<span class="px-4 font-caption text-outline text-[10px] uppercase tracking-[0.2em]">Or continue with email</span>
+<div class="flex-grow border-t border-white/5"></div>
+</div>
+<!-- Registration Form -->
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="font-caption text-on-surface-variant block ml-1">Full Name</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-lg">person</span>
+<input class="w-full bg-[#050508] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-white font-body-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-600" placeholder="John Doe" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-caption text-on-surface-variant block ml-1">Email Address</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-lg">mail</span>
+<input class="w-full bg-[#050508] border border-white/10 rounded-lg py-3 pl-10 pr-4 text-white font-body-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-600" placeholder="name@company.com" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-caption text-on-surface-variant block ml-1">Password</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-lg">lock</span>
+<input class="w-full bg-[#050508] border border-white/10 rounded-lg py-3 pl-10 pr-12 text-white font-body-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-600" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+</div>
+<!-- Password Strength Indicator -->
+<div class="pt-2">
+<div class="flex gap-1 mb-2">
+<div class="h-1 flex-1 bg-tertiary rounded-full"></div>
+<div class="h-1 flex-1 bg-tertiary rounded-full"></div>
+<div class="h-1 flex-1 bg-tertiary rounded-full"></div>
+<div class="h-1 flex-1 bg-white/10 rounded-full"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-caption text-[10px] text-tertiary">Strong Password</span>
+<span class="font-caption text-[10px] text-on-surface-variant">Must be 8+ chars</span>
+</div>
+</div>
+</div>
+<div class="flex items-start gap-3 pt-2">
+<input class="mt-1 rounded border-white/10 bg-[#050508] text-primary focus:ring-primary/20 focus:ring-offset-0 bg-transparent" id="terms" type="checkbox"/>
+<label class="font-body-sm text-on-surface-variant text-xs leading-relaxed" for="terms">
+                        I agree to the <a class="text-primary hover:underline" href="#">Terms of Service</a> and <a class="text-primary hover:underline" href="#">Privacy Policy</a>.
+                    </label>
+</div>
+<button class="w-full bg-gradient-to-r from-[#6366f1] to-[#4f46e5] text-white py-4 rounded-xl font-data-display text-sm font-bold uppercase tracking-widest hover:brightness-110 active:scale-[0.97] transition-all shadow-xl shadow-indigo-500/20" type="submit">
+                    Create Account
+                </button>
+</form>
+<footer class="mt-8 text-center">
+<p class="font-body-sm text-on-surface-variant">
+                    Already have an account? <a class="text-primary font-medium hover:underline" href="#">Sign In</a>
+</p>
+</footer>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-white/5 bg-[#050508]">
+<div class="flex flex-col md:flex-row justify-between items-center py-12 px-8 max-w-7xl mx-auto gap-4">
+<div class="flex flex-col items-center md:items-start gap-2">
+<div class="text-lg font-black text-white">SpEndora</div>
+<p class="text-sm font-light text-gray-500 font-caption">© 2024 SpEndora. Precision Finance.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-gray-500 hover:text-[#6366f1] transition-colors font-caption text-sm" href="#">Privacy</a>
+<a class="text-gray-500 hover:text-[#6366f1] transition-colors font-caption text-sm" href="#">Terms</a>
+<a class="text-gray-500 hover:text-[#6366f1] transition-colors font-caption text-sm" href="#">Security</a>
+<a class="text-gray-500 hover:text-[#6366f1] transition-colors font-caption text-sm" href="#">Support</a>
+</div>
+</div>
+</footer>
+</body></html>

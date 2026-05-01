@@ -40,16 +40,16 @@ export default function PlanUsageBar({ plan, counts }) {
   };
 
   return (
-    <div className="bg-gradient-to-r from-amber-500/8 to-orange-500/8 border border-amber-500/20 rounded-2xl p-5 mb-6">
+    <div className="glass-card rounded-2xl p-5 mb-6 border border-white/10">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-base">🆓</span>
+          <span className="text-base">📈</span>
           <span className="text-[13px] font-semibold text-white/80">Free Plan Usage</span>
         </div>
         <a
           href="/pricing"
-          className="text-[12px] font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+          className="text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
         >
           Upgrade to Premium →
         </a>
@@ -79,16 +79,14 @@ export default function PlanUsageBar({ plan, counts }) {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              {isMaxed && (
-                <p className="text-[10px] text-red-400 mt-1">Limit reached</p>
-              )}
+              {isMaxed && <p className="text-[10px] text-red-400 mt-1">Limit reached</p>}
             </div>
           );
         })}
       </div>
 
       {/* Locked features note */}
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/[0.06]">
+      <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-white/[0.06]">
         <div className="flex items-center gap-1.5 text-white/35 text-[12px]">
           <span>🔒</span> Analytics
         </div>

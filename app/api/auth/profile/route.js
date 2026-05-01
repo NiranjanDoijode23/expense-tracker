@@ -17,6 +17,7 @@ export async function GET(req) {
         id: true,
         email: true,
         name: true,
+        plan: true,
         createdAt: true,
         _count: {
           select: {

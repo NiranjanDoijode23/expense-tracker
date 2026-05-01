@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import ThemeToggle from "../components/ThemeToggle";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-
-  import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,13 +15,11 @@ export default function LoginPage() {
   const router = useRouter();
 
 
-const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
-  if (session) {
-    router.push("/dashboard"); // ✅ redirect if already logged in
-  }
-}, [session, router]);
+    if (session) router.push("/dashboard");
+  }, [session, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -56,36 +53,44 @@ const { data: session, status } = useSession();
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#050508] text-on-background font-body-main antialiased selection:bg-primary-container selection:text-on-primary-container">
+      <style>{`
+        @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-up { animation: fade-up 0.5s ease forwards; }
+      `}</style>
+      <header className="sticky top-0 w-full z-50 border-b bg-[#0d0d14]/80 backdrop-blur-xl border-white/5 shadow-2xl shadow-indigo-500/10">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 max-w-7xl mx-auto">
+          <div className="text-xl font-bold tracking-tighter text-white font-h2">SpEndora</div>
+          <div className="hidden md:flex items-center space-x-8">
+            <button onClick={() => router.push("/")} className="text-gray-400 hover:text-white transition-colors duration-200 font-caption">Expenses</button>
+            <button onClick={() => router.push("/")} className="text-gray-400 hover:text-white transition-colors duration-200 font-caption">Analytics</button>
+            <button onClick={() => router.push("/")} className="text-gray-400 hover:text-white transition-colors duration-200 font-caption">Budget</button>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button onClick={() => router.push("/register")} className="bg-primary-container text-on-primary-container px-5 py-2 rounded-xl font-caption font-bold active:scale-95 transition-transform">
+              Get Started
+            </button>
+          </div>
+        </div>
+      </header>
+      <main className="min-h-[calc(100vh-170px)] flex items-center justify-center px-4 py-10 relative overflow-hidden">
 
       {/* Background Orbs */}
       <div className="absolute w-[500px] h-[500px] bg-blue-500 rounded-full blur-[80px] opacity-15 -top-24 -left-36 pointer-events-none" />
       <div className="absolute w-[400px] h-[400px] bg-indigo-500 rounded-full blur-[80px] opacity-15 -bottom-20 -right-24 pointer-events-none" />
 
-      {/* Card */}
-      <div className="absolute top-8 right-8 z-50">
-        <ThemeToggle />
-      </div>
-
-      <div className="w-full max-w-md bg-white/[0.04] border border-white/[0.09] rounded-3xl px-10 py-11 backdrop-blur-xl relative z-10 animate-fade-up">
+      <div className="w-full max-w-[440px] glass-card rounded-[2rem] p-8 sm:p-10 relative z-10 animate-fade-up">
 
         {/* Icon */}
         <div className="w-[52px] h-[52px] bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center text-2xl mb-7">
           💸
         </div>
 
-        <h1 className="text-3xl font-bold text-white mb-1.5" style={{ fontFamily: "'Playfair Display', serif" }}>
-          Welcome back
-        </h1>
-        <p className="text-white/40 text-sm mb-8">
-          Sign in to your expense tracker
-        </p>
+        <h1 className="font-h1 text-3xl sm:text-h2 text-white mb-2">Welcome Back</h1>
+        <p className="font-body-sm text-on-surface-variant mb-8">Access your financial precision dashboard.</p>
 
-        <button
-          onClick={handleGoogleLogin}
-          disabled={googleLoading || loading}
-          className="w-full flex items-center justify-center gap-3 bg-white/[0.06] border border-white/[0.12] rounded-xl px-4 py-3.5 text-white text-[15px] font-medium hover:bg-white/[0.10] hover:-translate-y-0.5 active:scale-95 active:translate-y-0 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed mb-5"
-        >
+        <button onClick={handleGoogleLogin} disabled={googleLoading || loading} className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 bg-surface-container border border-white/10 rounded-xl hover:bg-white/5 transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
           {googleLoading ? (
             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
@@ -96,8 +101,14 @@ const { data: session, status } = useSession();
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
           )}
-          {googleLoading ? "Connecting..." : "Continue with Google"}
+          <span className="font-caption text-white">{googleLoading ? "Connecting..." : "Continue with Google"}</span>
         </button>
+
+        <div className="relative flex items-center mb-6">
+          <div className="flex-grow border-t border-white/5" />
+          <span className="flex-shrink mx-4 text-gray-500 font-caption uppercase tracking-widest text-[10px]">or continue with</span>
+          <div className="flex-grow border-t border-white/5" />
+        </div>
 
         {/* Error */}
         {error && (
@@ -106,35 +117,31 @@ const { data: session, status } = useSession();
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-5">
+        <form onSubmit={handleLogin} className="space-y-5">
 
           {/* Email */}
           <div>
-            <label className="block text-white/50 text-[11px] font-medium uppercase tracking-widest mb-2">
-              Email
-            </label>
+            <label className="block font-caption text-on-surface-variant mb-2 ml-1">Email Address</label>
             <input
               type="email"
-              placeholder="you@example.com"
+              placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-white text-[15px] placeholder-white/25 outline-none focus:border-blue-400/50 focus:bg-white/[0.07] transition-all"
+              className="w-full bg-[#050508] border-[#141420] rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none font-body-sm border"
             />
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-white/50 text-[11px] font-medium uppercase tracking-widest mb-2">
-              Password
-            </label>
+            <label className="block font-caption text-on-surface-variant mb-2 ml-1">Password</label>
             <input
               type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-white text-[15px] placeholder-white/25 outline-none focus:border-blue-400/50 focus:bg-white/[0.07] transition-all"
+              className="w-full bg-[#050508] border-[#141420] rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 outline-none font-body-sm border"
             />
           </div>
 
@@ -142,30 +149,35 @@ const { data: session, status } = useSession();
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold text-[15px] rounded-xl hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
+            className="w-full bg-gradient-to-r from-[#6366f1] to-[#4f46e5] text-white py-4 rounded-xl font-body-main font-bold shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "Signing in..." : "Sign In to Dashboard"}
           </button>
 
         </form>
 
-        <p className="text-center text-white/30 text-[13px] mt-7">
+        <p className="text-center mt-8 font-body-sm text-on-surface-variant">
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-blue-400 font-medium hover:text-blue-300 transition-colors">
-            Register
+          <Link href="/register" className="text-white font-semibold hover:underline decoration-primary">
+            Create one for free
           </Link>
         </p>
-
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
-        @keyframes fade-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-up { animation: fade-up 0.5s ease forwards; }
-      `}</style>
+      </main>
+      <footer className="bg-[#050508] w-full border-t border-white/5">
+        <div className="flex flex-col md:flex-row justify-between items-center py-10 px-6 max-w-7xl mx-auto gap-4">
+          <div className="flex flex-col gap-2 items-center md:items-start">
+            <div className="text-lg font-black text-white font-h2">SpEndora</div>
+            <p className="text-sm font-light text-gray-500 font-caption">© 2024 SpEndora. Precision Finance.</p>
+          </div>
+          <div className="flex gap-8">
+            <button onClick={() => router.push("/")} className="text-gray-500 hover:text-[#6366f1] transition-colors font-caption">Privacy</button>
+            <button onClick={() => router.push("/")} className="text-gray-500 hover:text-[#6366f1] transition-colors font-caption">Terms</button>
+            <button onClick={() => router.push("/")} className="text-gray-500 hover:text-[#6366f1] transition-colors font-caption">Security</button>
+            <button onClick={() => router.push("/")} className="text-gray-500 hover:text-[#6366f1] transition-colors font-caption">Support</button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

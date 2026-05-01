@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SpEndora Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "surface-container-highest": "#34343d",
+                "on-tertiary-container": "#000608",
+                "surface-container-high": "#292932",
+                "inverse-surface": "#e4e1ed",
+                "tertiary-fixed-dim": "#2fd9f4",
+                "on-primary": "#1000a9",
+                "error": "#ffb4ab",
+                "inverse-primary": "#494bd6",
+                "surface-variant": "#34343d",
+                "on-secondary": "#3c0091",
+                "tertiary-container": "#008395",
+                "surface": "#13131b",
+                "inverse-on-surface": "#303038",
+                "on-background": "#e4e1ed",
+                "on-primary-fixed-variant": "#2f2ebe",
+                "surface-container": "#1f1f27",
+                "on-secondary-container": "#c4abff",
+                "on-tertiary-fixed-variant": "#004e5a",
+                "surface-dim": "#13131b",
+                "on-secondary-fixed": "#23005c",
+                "primary": "#c0c1ff",
+                "outline-variant": "#464554",
+                "primary-container": "#8083ff",
+                "secondary-container": "#571bc1",
+                "surface-container-low": "#1b1b23",
+                "primary-fixed": "#e1e0ff",
+                "background": "#13131b",
+                "on-primary-container": "#0d0096",
+                "error-container": "#93000a",
+                "primary-fixed-dim": "#c0c1ff",
+                "secondary": "#d0bcff",
+                "on-surface-variant": "#c7c4d7",
+                "on-tertiary": "#00363e",
+                "surface-container-lowest": "#0d0d15",
+                "tertiary-fixed": "#a2eeff",
+                "outline": "#908fa0",
+                "surface-bright": "#393841",
+                "on-error": "#690005",
+                "secondary-fixed-dim": "#d0bcff",
+                "on-primary-fixed": "#07006c",
+                "secondary-fixed": "#e9ddff",
+                "on-error-container": "#ffdad6",
+                "tertiary": "#2fd9f4",
+                "on-tertiary-fixed": "#001f25",
+                "on-surface": "#e4e1ed",
+                "surface-tint": "#c0c1ff",
+                "on-secondary-fixed-variant": "#5516be"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "gutter": "24px",
+                "xl": "3rem",
+                "lg": "2rem",
+                "sm": "1rem",
+                "md": "1.5rem",
+                "unit": "4px",
+                "xs": "0.5rem",
+                "margin": "32px"
+            },
+            "fontFamily": {
+                "caption": ["Inter"],
+                "body-main": ["Inter"],
+                "data-display": ["Space Grotesk"],
+                "body-sm": ["Inter"],
+                "h1": ["Cal Sans", "Inter", "sans-serif"],
+                "h2": ["Cal Sans", "Inter", "sans-serif"]
+            },
+            "fontSize": {
+                "caption": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                "body-main": ["16px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                "data-display": ["24px", {"lineHeight": "1", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                "body-sm": ["14px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
+                "h1": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                "h2": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(13, 13, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        .hover-lift {
+            transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1), border-color 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-[#050508] text-on-background font-body-main antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 border-b border-white/5 bg-[#0d0d14]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/10">
+<nav class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-white">SpEndora</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-sm font-sans antialiased tracking-tight text-[#6366f1] border-b-2 border-[#6366f1] pb-1" href="#">Expenses</a>
+<a class="text-sm font-sans antialiased tracking-tight text-gray-400 hover:text-white transition-colors duration-200" href="#">Analytics</a>
+<a class="text-sm font-sans antialiased tracking-tight text-gray-400 hover:text-white transition-colors duration-200" href="#">Budget</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined p-2 text-gray-400 hover:text-white transition-colors">notifications</button>
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#6366f1] to-[#a855f7] flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white/10">
+                    N
+                </div>
+</div>
+</nav>
+</header>
+<main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+<!-- Hero Greeting & Alert -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<p class="font-caption text-caption text-primary mb-2">DASHBOARD OVERVIEW</p>
+<h1 class="font-h1 text-h1 text-white">Good morning, Niranjan 👋</h1>
+</div>
+<!-- Alert Banner -->
+<div class="flex items-center gap-4 bg-error-container/20 border border-error/20 p-4 rounded-xl max-w-md">
+<span class="material-symbols-outlined text-error" data-weight="fill" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="flex-1">
+<p class="font-body-sm text-body-sm text-error font-semibold">Budget Alert</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Your "Dining Out" budget is at 92% capacity.</p>
+</div>
+<button class="text-xs font-bold uppercase tracking-wider text-error hover:underline transition-all">Review</button>
+</div>
+</div>
+<!-- Stat Cards Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="glass-card hover-lift p-6 rounded-2xl group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-xs font-medium text-tertiary">+12.4% vs last mo</span>
+</div>
+<p class="text-gray-400 text-sm font-medium">Total Spent</p>
+<h3 class="font-data-display text-data-display text-white mt-1">$12,482.00</h3>
+</div>
+<div class="glass-card hover-lift p-6 rounded-2xl">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 rounded-lg bg-secondary/10 text-secondary">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<!-- Sparkline Simulation -->
+<div class="flex items-end gap-0.5 h-8">
+<div class="w-1 bg-secondary/20 h-2 rounded-full"></div>
+<div class="w-1 bg-secondary/40 h-4 rounded-full"></div>
+<div class="w-1 bg-secondary/60 h-3 rounded-full"></div>
+<div class="w-1 bg-secondary/80 h-6 rounded-full"></div>
+<div class="w-1 bg-secondary h-5 rounded-full"></div>
+</div>
+</div>
+<p class="text-gray-400 text-sm font-medium">This Month</p>
+<h3 class="font-data-display text-data-display text-white mt-1">$3,240.50</h3>
+</div>
+<div class="glass-card hover-lift p-6 rounded-2xl">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 rounded-lg bg-tertiary/10 text-tertiary">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+</div>
+<p class="text-gray-400 text-sm font-medium">Transactions</p>
+<h3 class="font-data-display text-data-display text-white mt-1">142</h3>
+</div>
+<div class="glass-card hover-lift p-6 rounded-2xl">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 rounded-lg bg-primary-container/10 text-primary-container">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+</div>
+<p class="text-gray-400 text-sm font-medium">Active Budgets</p>
+<h3 class="font-data-display text-data-display text-white mt-1">8 / 12</h3>
+</div>
+</div>
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Area Chart: Spending Trend -->
+<div class="glass-card p-6 rounded-2xl lg:col-span-2">
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-h2 text-data-display text-white">Spending Trend</h2>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-xs rounded-full bg-white/5 text-gray-400 hover:text-white transition-colors">7D</button>
+<button class="px-3 py-1 text-xs rounded-full bg-primary/20 text-primary">30D</button>
+</div>
+</div>
+<div class="relative h-64 w-full">
+<img class="w-full h-full object-cover rounded-xl opacity-40 mix-blend-luminosity" data-alt="A professional data visualization dashboard displaying a sophisticated financial area chart. The chart features smooth glowing lines in indigo and violet over a dark, deep blue-black background. The scene has a cinematic high-tech aesthetic with soft lens flares and a minimalist user interface design consistent with glassmorphism principles." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZXHoA9YXySS7r-PaGPNsrcWXbKInhBQBrY467Rp2MjYSKAioeJ23-M0pXt0fBl2HFWQeQ2-MVT8S2tM4Ewd_z02k-HjSL9ldb6bjlLu244RwCQthg5IEo1cuhiZewHFw36vNcQ51_-kEv-fvjaMFZzIk4B5KC_949nV6UQS4Q77YwJ9EwjKdw3DN4LRR5fejfJ9aD4bO4bORXrPNeXamZLziuHOi0ltyiX-HnnEQH9rUG-98N4of64vLK4Wy7FX8VF1SmZKcGao4W"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0d0d14] to-transparent"></div>
+</div>
+</div>
+<!-- Donut Chart: Spending by Category -->
+<div class="glass-card p-6 rounded-2xl">
+<h2 class="font-h2 text-data-display text-white mb-8">Categories</h2>
+<div class="flex flex-col items-center justify-center space-y-6">
+<div class="relative w-48 h-48 flex items-center justify-center">
+<!-- Simulated Donut Chart -->
+<div class="absolute inset-0 rounded-full border-[12px] border-primary border-t-transparent border-r-transparent -rotate-45"></div>
+<div class="absolute inset-0 rounded-full border-[12px] border-secondary border-b-transparent border-l-transparent rotate-45"></div>
+<div class="flex flex-col items-center">
+<span class="text-gray-400 text-xs">Top Category</span>
+<span class="text-white font-bold">Housing</span>
+</div>
+</div>
+<div class="w-full space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-sm text-gray-400">Housing</span>
+</div>
+<span class="text-sm text-white font-medium">45%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-sm text-gray-400">Food &amp; Drink</span>
+</div>
+<span class="text-sm text-white font-medium">28%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-sm text-gray-400">Transport</span>
+</div>
+<span class="text-sm text-white font-medium">12%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Expense Table Section -->
+<div class="glass-card rounded-2xl overflow-hidden">
+<div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<h2 class="font-h2 text-data-display text-white">Recent Expenses</h2>
+<div class="flex items-center gap-3">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors">search</span>
+<input class="bg-[#050508] border border-[#141420] text-sm rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all w-64" placeholder="Search transactions..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm font-medium">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                        Filters
+                    </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-y border-white/5 bg-white/[0.02]">
+<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Entity</th>
+<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">shopping_bag</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-white">Apple Store</p>
+<p class="text-xs text-gray-500">Subscription - iCloud</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase">Technology</span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-400">Oct 24, 2024</td>
+<td class="px-6 py-4 text-sm font-semibold text-white">-$9.99</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-xs text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                                    Completed
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="material-symbols-outlined text-gray-600 hover:text-white transition-colors">more_horiz</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">restaurant</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-white">Starbucks</p>
+<p class="text-xs text-gray-500">Coffee and Snacks</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-md bg-secondary/10 text-secondary text-[10px] font-bold uppercase">Food &amp; Drink</span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-400">Oct 23, 2024</td>
+<td class="px-6 py-4 text-sm font-semibold text-white">-$18.50</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-xs text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                                    Completed
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="material-symbols-outlined text-gray-600 hover:text-white transition-colors">more_horiz</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">flight_takeoff</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-white">Delta Airlines</p>
+<p class="text-xs text-gray-500">Flight to SF</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-md bg-tertiary/10 text-tertiary text-[10px] font-bold uppercase">Travel</span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-400">Oct 22, 2024</td>
+<td class="px-6 py-4 text-sm font-semibold text-white">-$450.00</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-xs text-gray-500">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                    Pending
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="material-symbols-outlined text-gray-600 hover:text-white transition-colors">more_horiz</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-white/5 flex items-center justify-center">
+<button class="text-sm font-medium text-primary hover:text-white transition-colors flex items-center gap-2">
+                    View All Transactions
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-white/5 bg-[#050508]">
+<div class="flex flex-col md:flex-row justify-between items-center py-12 px-8 max-w-7xl mx-auto gap-4">
+<div class="flex flex-col items-center md:items-start gap-2">
+<span class="text-lg font-black text-white">SpEndora</span>
+<p class="text-sm font-light text-gray-500">© 2024 SpEndora. Precision Finance.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-sm font-light text-gray-500 hover:text-[#6366f1] transition-colors" href="#">Privacy</a>
+<a class="text-sm font-light text-gray-500 hover:text-[#6366f1] transition-colors" href="#">Terms</a>
+<a class="text-sm font-light text-gray-500 hover:text-[#6366f1] transition-colors" href="#">Security</a>
+<a class="text-sm font-light text-gray-500 hover:text-[#6366f1] transition-colors" href="#">Support</a>
+</div>
+</div>
+</footer>
+<!-- FAB for adding new transaction (Contextual) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-tr from-[#6366f1] to-[#a855f7] rounded-full shadow-2xl shadow-indigo-500/40 flex items-center justify-center text-white active:scale-95 transition-transform group">
+<span class="material-symbols-outlined transition-transform group-hover:rotate-90">add</span>
+</button>
+</body></html>

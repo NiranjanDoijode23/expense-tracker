@@ -12,9 +12,9 @@ const COLORS = ["#3b82f6", "#8b5cf6", "#f472b6", "#34d399", "#f59e0b", "#ef4444"
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-2.5 text-sm shadow-xl">
+      <div className="bg-[#0f111b]/95 backdrop-blur-md border border-[#8b5cf6]/25 rounded-xl px-4 py-2.5 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
         {label && <p className="text-white/50 text-[11px] mb-1">{label}</p>}
-        <p className="text-white font-semibold">₹{payload[0].value.toFixed(2)}</p>
+        <p className="text-white font-semibold">₹{Number(payload[0].value || 0).toFixed(2)}</p>
       </div>
     );
   }
@@ -51,6 +51,7 @@ export default function ExpenseCharts({ byCategory, byMonth, byDay }) {
     );
   }
 
+  const axisTick = { fill: "rgba(255,255,255,0.45)", fontSize: 11 };
   return (
     <div className="flex flex-col gap-6">
 
@@ -58,7 +59,7 @@ export default function ExpenseCharts({ byCategory, byMonth, byDay }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* 🥧 Pie Chart — Spending by Category */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 hover:border-white/[0.13] transition-colors">
+        <div className="glass-card bg-gradient-to-br from-[#11131f]/90 to-[#171328]/85 border border-[#6366f1]/20 rounded-2xl p-7 hover:border-[#818cf8]/35 transition-colors">
           <h3 className="text-[15px] font-semibold mb-1">Spending by Category</h3>
           <p className="text-white/30 text-[12px] mb-6">Where your money goes</p>
 
@@ -71,6 +72,7 @@ export default function ExpenseCharts({ byCategory, byMonth, byDay }) {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
+                  innerRadius={58}
                   outerRadius={100}
                   labelLine={false}
                   label={renderCustomLabel}
@@ -97,22 +99,22 @@ export default function ExpenseCharts({ byCategory, byMonth, byDay }) {
         </div>
 
         {/* 📊 Bar Chart — Monthly Spending */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 hover:border-white/[0.13] transition-colors">
+        <div className="glass-card bg-gradient-to-br from-[#11131f]/90 to-[#171328]/85 border border-[#6366f1]/20 rounded-2xl p-7 hover:border-[#818cf8]/35 transition-colors">
           <h3 className="text-[15px] font-semibold mb-1">Monthly Spending</h3>
           <p className="text-white/30 text-[12px] mb-6">How much you spend each month</p>
 
           {hasMonth ? (
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={byMonth} barSize={32}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <BarChart data={byMonth} barSize={30}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(129,140,248,0.12)" vertical={false} />
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }}
+                  tick={axisTick}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }}
+                  tick={axisTick}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v) => `₹${v}`}
@@ -121,8 +123,9 @@ export default function ExpenseCharts({ byCategory, byMonth, byDay }) {
                 <Bar dataKey="total" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
+                    <stop offset="0%" stopColor="#60a5fa" />
+                    <stop offset="50%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#a855f7" />
                   </linearGradient>
                 </defs>
               </BarChart>
@@ -136,7 +139,7 @@ export default function ExpenseCharts({ byCategory, byMonth, byDay }) {
       </div>
 
       {/* Row 2 — Line Chart full width */}
-      <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 hover:border-white/[0.13] transition-colors">
+      <div className="glass-card bg-gradient-to-br from-[#11131f]/90 to-[#171328]/85 border border-[#6366f1]/20 rounded-2xl p-7 hover:border-[#818cf8]/35 transition-colors">
         <h3 className="text-[15px] font-semibold mb-1">Last 7 Days</h3>
         <p className="text-white/30 text-[12px] mb-6">Your daily spending trend</p>
 
@@ -149,15 +152,15 @@ export default function ExpenseCharts({ byCategory, byMonth, byDay }) {
                   <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(129,140,248,0.12)" vertical={false} />
               <XAxis
                 dataKey="date"
-                tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }}
+                tick={axisTick}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }}
+                tick={axisTick}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `₹${v}`}

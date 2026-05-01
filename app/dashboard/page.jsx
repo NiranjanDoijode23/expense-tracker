@@ -7,7 +7,6 @@ import ThemeToggle from "../components/ThemeToggle";
 import toast from "react-hot-toast"; // ✅ add this
 import { signOut } from "next-auth/react";
 import UpgradePrompt from "../components/UpgradePrompt";
-import PlanUsageBar from "../components/PlanUsageBar";
 import { PLANS } from "@/lib/plans";
 
 
@@ -183,20 +182,6 @@ export default function DashboardPage() {
       setDeletingId(null);
     }
 
-    if (confirmDelete.type === "budget") {
-      setDeletingBudgetId(confirmDelete.id);
-      const res = await fetch(`/api/budget/${confirmDelete.id}`, {
-        method: "DELETE", credentials: "include",
-      });
-      if (res.ok) {
-        setBudgets((prev) => prev.filter((b) => b.id !== confirmDelete.id));
-        toast.success("Budget deleted");
-      } else {
-        toast.error("Failed to delete budget");
-      }
-      setDeletingBudgetId(null);
-    }
-
     setConfirmDelete(null);
   };
 
@@ -311,12 +296,25 @@ const handleAddBudget = async (e) => {
 };
 
 
-  const handleDeleteBudget = (budget) => {
-    setConfirmDelete({
-      type: "budget",
-      id: budget.id,
-      name: `${budget.category?.name || "Overall"} budget`,
-    });
+  const handleDeleteBudget = async (budget) => {
+    const confirmed = window.confirm(`Delete ${budget.category?.name || "Overall"} budget?`);
+    if (!confirmed) return;
+    setDeletingBudgetId(budget.id);
+    try {
+      const res = await fetch(`/api/budget/${encodeURIComponent(budget.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to delete budget");
+        return;
+      }
+      setBudgets((prev) => prev.filter((b) => b.id !== budget.id));
+      toast.success("Budget deleted");
+    } finally {
+      setDeletingBudgetId(null);
+    }
   };
 
 
@@ -337,6 +335,8 @@ const handleAddBudget = async (e) => {
 
   const totalSpent = allExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
   const visibleTotal = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const planBudgetLimit = PLANS[user?.plan || "free"]?.limits?.budgets || 0;
+  const activeBudgetSummary = planBudgetLimit ? `${budgets.length} / ${planBudgetLimit}` : `${budgets.length}`;
   const thisMonth = allExpenses
     .filter((e) => {
       const d = new Date(e.date);
@@ -376,13 +376,6 @@ const handleAddBudget = async (e) => {
     </div>
   );
 
-  const stats = [
-    { label: "Total Spent", value: `₹${totalSpent.toFixed(2)}`, icon: "📊", color: "text-blue-400" },
-    { label: "This Month", value: `₹${thisMonth.toFixed(2)}`, icon: "📅", color: "text-violet-400" },
-    { label: "Transactions", value: allExpenses.length, icon: "🧾", color: "text-emerald-400" },
-    { label: "Budgets", value: budgets.length, icon: "🎯", color: "text-amber-400" },
-  ];
-
   const tabs = [
     { key: "expenses", label: "🧾 Expenses" },
     { key: "analytics", label: "📊 Analytics" },
@@ -390,9 +383,8 @@ const handleAddBudget = async (e) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-[#050508] text-on-background font-body-main antialiased selection:bg-primary-container selection:text-on-primary-container pb-20">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         @keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes modal-in { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .animate-fade-up { animation: fade-up 0.45s ease forwards; }
@@ -401,143 +393,93 @@ const handleAddBudget = async (e) => {
         select option { background: #13131f; color: #fff; }
       `}</style>
 
-      {/* Orbs */}
-      <div className="fixed w-[600px] h-[600px] bg-blue-500 rounded-full blur-[100px] opacity-[0.07] -top-48 -left-48 pointer-events-none" />
-      <div className="fixed w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[100px] opacity-[0.07] -bottom-24 -right-24 pointer-events-none" />
-
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-10 py-[18px] border-b border-white/[0.06] bg-[rgba(10,10,15,0.85)] backdrop-blur-xl">
-        <div className="flex items-center gap-2.5 cursor-pointer">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-lg"><button className="cursor-pointer" onClick={(e) => router.push("/dashboard")}>💸</button></div>
-          <span className="font-semibold text-base"><button className="cursor-pointer" onClick={(e) => router.push("/dashboard")}>ExpenseTrack </button> </span>
-        </div>
-        <div className="flex items-center gap-3.5">
-          <div className="flex items-center gap-2.5 cursor-pointer">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-[13px] font-bold"><button onClick={(e) => router.push("/profile")} className="cursor-pointer"> {getInitials()}</button></div>
-            <div>
-              <div className="text-[13px] font-medium"> <button className="cursor-pointer" onClick={(e) => router.push("/profile")}>{getDisplayName()} </button></div>
-              <div className="text-[11px] text-white/35"> <button className="cursor-pointer" onClick={(e) => router.push("/profile")}>{user?.email}</button></div>
+      {/* TopNavBar */}
+      <header className="sticky top-0 w-full z-50 border-b border-white/5 bg-[#0d0d14]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/10">
+        <nav className="flex items-center justify-between px-4 sm:px-6 py-4 max-w-7xl mx-auto">
+          <div className="flex items-center gap-8">
+            <span className="text-xl font-bold tracking-tighter text-white cursor-pointer" onClick={() => router.push("/dashboard")}>SpEndora</span>
+            <div className="hidden md:flex items-center gap-6">
+              <button onClick={() => setActiveTab("expenses")} className={`text-sm font-sans antialiased tracking-tight transition-colors duration-200 ${activeTab === "expenses" ? "text-[#6366f1] border-b-2 border-[#6366f1] pb-1" : "text-gray-400 hover:text-white"}`}>Expenses</button>
+              <button onClick={() => setActiveTab("analytics")} className={`text-sm font-sans antialiased tracking-tight transition-colors duration-200 ${activeTab === "analytics" ? "text-[#6366f1] border-b-2 border-[#6366f1] pb-1" : "text-gray-400 hover:text-white"}`}>Analytics</button>
+              <button onClick={() => setActiveTab("budget")} className={`text-sm font-sans antialiased tracking-tight transition-colors duration-200 ${activeTab === "budget" ? "text-[#6366f1] border-b-2 border-[#6366f1] pb-1" : "text-gray-400 hover:text-white"}`}>Budget</button>
             </div>
           </div>
-          <ThemeToggle />
-          <button onClick={handleLogout} className="bg-red-500/10 border border-red-500/25 text-red-300 px-5 py-2.5 rounded-xl text-[13px] font-medium hover:bg-red-500/20 transition-colors cursor-pointer">
-            Logout
-          </button>
-        </div>
-      </nav>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button onClick={handleLogout} className="material-symbols-outlined p-2 text-gray-400 hover:text-white transition-colors" title="Logout">logout</button>
+            <div onClick={() => router.push("/profile")} className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#6366f1] to-[#a855f7] flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white/10 cursor-pointer">
+              {getInitials()}
+            </div>
+          </div>
+        </nav>
+      </header>
 
       {/* Main */}
-      <main className="max-w-[1100px] mx-auto px-10 py-11 relative z-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 relative z-10 animate-fade-up">
 
-        {/* Header */}
-        <div className="flex items-start justify-between flex-wrap gap-4 mb-9 animate-fade-up">
+        {/* Hero Greeting & Header */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-6">
           <div>
-            <h1 className="text-[34px] font-bold mb-1.5" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Hey, {getDisplayName()} 👋
-            </h1>
-            <p className="text-white/35 text-sm">Here&apos;s your expense overview</p>
+            <p className="font-caption text-caption text-primary mb-2">DASHBOARD OVERVIEW</p>
+            <h1 className="font-h1 text-3xl sm:text-4xl md:text-h1 text-white">Good morning, {getDisplayName()} 👋</h1>
           </div>
-          {/* ✅ Header buttons — Add Expense + Export CSV + Export Excel */}
+
+          {/* Actions */}
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Export CSV */}
-            <button
-              onClick={handleExportCSV}
-              disabled={exporting || allExpenses.length === 0}
-              className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[13px] font-medium px-4 py-2.5 rounded-xl hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              📄 CSV
+            <button onClick={handleExportCSV} disabled={exporting || allExpenses.length === 0} className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm font-medium text-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed">
+              <span className="material-symbols-outlined text-sm">description</span> CSV
             </button>
-            {/* Export Excel */}
-            <button
-              onClick={handleExportExcel}
-              disabled={exporting || allExpenses.length === 0}
-              className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[13px] font-medium px-4 py-2.5 rounded-xl hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              📊 Excel
+            <button onClick={handleExportExcel} disabled={exporting || allExpenses.length === 0} className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm font-medium text-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed">
+              <span className="material-symbols-outlined text-sm">table</span> Excel
             </button>
-            {/* Add Expense */}
-            <button
-              onClick={() => router.push("/add-expense")}
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold text-sm px-6 py-3 rounded-xl hover:opacity-90 hover:-translate-y-0.5 transition-all cursor-pointer whitespace-nowrap"
-            >
-              + Add Expense
+            <button onClick={() => router.push("/add-expense")} className="flex items-center gap-2 bg-gradient-to-tr from-[#6366f1] to-[#a855f7] text-white font-semibold text-sm px-6 py-2.5 rounded-xl hover:opacity-90 hover:-translate-y-0.5 transition-all cursor-pointer whitespace-nowrap">
+              <span className="material-symbols-outlined text-sm">add</span> Expense
             </button>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up"></div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up">
-          {stats.map((stat) => (
-            <div key={stat.label} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 hover:border-white/[0.13] transition-colors">
-              <div className="text-2xl mb-3">{stat.icon}</div>
-              <div className="text-white/40 text-[11px] font-medium uppercase tracking-wider mb-1.5">{stat.label}</div>
-              <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
+        {/* Stat Cards Bento Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          <div className="glass-card hover-lift p-6 rounded-2xl group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <span className="material-symbols-outlined">payments</span>
+              </div>
             </div>
-          ))}
+            <p className="text-gray-400 text-sm font-medium">Total Spent</p>
+            <h3 className="font-data-display text-data-display text-white mt-1">₹{totalSpent.toFixed(2)}</h3>
+          </div>
+          
+          <div className="glass-card hover-lift p-6 rounded-2xl">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-2 rounded-lg bg-secondary/10 text-secondary">
+                <span className="material-symbols-outlined">trending_up</span>
+              </div>
+            </div>
+            <p className="text-gray-400 text-sm font-medium">This Month</p>
+            <h3 className="font-data-display text-data-display text-white mt-1">₹{thisMonth.toFixed(2)}</h3>
+          </div>
+          
+          <div className="glass-card hover-lift p-6 rounded-2xl">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-2 rounded-lg bg-tertiary/10 text-tertiary">
+                <span className="material-symbols-outlined">receipt_long</span>
+              </div>
+            </div>
+            <p className="text-gray-400 text-sm font-medium">Transactions</p>
+            <h3 className="font-data-display text-data-display text-white mt-1">{allExpenses.length}</h3>
+          </div>
+          
+          <div className="glass-card hover-lift p-6 rounded-2xl">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-2 rounded-lg bg-primary-container/10 text-primary-container">
+                <span className="material-symbols-outlined">account_balance_wallet</span>
+              </div>
+            </div>
+            <p className="text-gray-400 text-sm font-medium">Active Budgets</p>
+            <h3 className="font-data-display text-data-display text-white mt-1">{activeBudgetSummary}</h3>
+          </div>
         </div>
-
-        <PlanUsageBar
-          plan={user?.plan || "free"}
-          counts={{
-            expenses: allExpenses.length,
-            categories: categories.length,
-            budgets: budgets.length,
-          }}
-        />
-
-        {/* ✅ Budget Alert Banner */}
-        {(() => {
-          const exceeded = budgets.filter(b => b.percentage >= 100);
-          const warning = budgets.filter(b => b.percentage >= 80 && b.percentage < 100);
-
-          if (exceeded.length === 0 && warning.length === 0) return null;
-
-          return (
-            <div className="flex flex-col gap-2 mb-6 animate-fade-up">
-              {/* 🚨 Exceeded budgets */}
-              {exceeded.map((b) => (
-                <div key={b.id} className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-3.5">
-                  <span className="text-lg">🚨</span>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-red-300 text-[13px] font-medium">
-                      <span className="font-bold">{b.category?.name || "Overall"}</span> budget exceeded!
-                      You&apos;re ₹{Math.abs(b.remaining).toFixed(2)} over your ₹{b.amount.toFixed(2)} limit
-                      for {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][b.month - 1]}.
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("budget")}
-                    className="text-red-400 text-[12px] font-medium hover:text-red-300 transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    View →
-                  </button>
-                </div>
-              ))}
-
-              {/* ⚠️ Warning budgets */}
-              {warning.map((b) => (
-                <div key={b.id} className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-3.5">
-                  <span className="text-lg">⚠️</span>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-amber-300 text-[13px] font-medium">
-                      <span className="font-bold">{b.category?.name || "Overall"}</span> budget is{" "}
-                      <span className="font-bold">{b.percentage.toFixed(0)}% used</span>.
-                      Only ₹{b.remaining.toFixed(2)} remaining for{" "}
-                      {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][b.month - 1]}.
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("budget")}
-                    className="text-amber-400 text-[12px] font-medium hover:text-amber-300 transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    View →
-                  </button>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 animate-fade-up">
@@ -560,13 +502,15 @@ const handleAddBudget = async (e) => {
           <div className="animate-fade-up">
             {user?.plan !== "premium" ? (
               // ✅ Show locked state for free users
-              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-16 text-center">
-                <div className="text-5xl mb-4">📊</div>
-                <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-1.5 text-amber-300 text-[12px] font-medium mb-4">
-                  👑 Premium Feature
+              <div className="glass-card rounded-2xl p-16 text-center border-t-4 border-t-amber-500">
+                <span className="material-symbols-outlined text-6xl text-amber-500 mb-4">insights</span>
+                <div className="flex justify-center mb-4">
+                  <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-1.5 text-amber-400 text-[12px] font-medium">
+                    <span className="material-symbols-outlined text-[14px]">workspace_premium</span> Premium Feature
+                  </div>
                 </div>
-                <h3 className="text-[18px] font-bold mb-3">Analytics is a Premium Feature</h3>
-                <p className="text-white/40 text-sm mb-7 max-w-[360px] mx-auto leading-relaxed">
+                <h3 className="text-xl font-bold mb-3 text-white">Analytics is a Premium Feature</h3>
+                <p className="text-gray-400 text-sm mb-7 max-w-[360px] mx-auto leading-relaxed">
                   Upgrade to Premium to unlock charts, spending trends, category breakdowns and more.
                 </p>
                 <button
@@ -574,9 +518,9 @@ const handleAddBudget = async (e) => {
                     message: "Upgrade to view your spending analytics, pie charts, monthly trends and daily breakdown.",
                     feature: "analytics",
                   })}
-                  className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-[14px] rounded-xl hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                  className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-[14px] rounded-xl hover:opacity-90 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 mx-auto"
                 >
-                  👑 Unlock Analytics
+                  <span className="material-symbols-outlined text-[18px]">lock_open</span> Unlock Analytics
                 </button>
               </div>
             ) : (
@@ -592,39 +536,39 @@ const handleAddBudget = async (e) => {
         {activeTab === "budget" && (
           <div className="animate-fade-up flex flex-col gap-6">
             {/* Add Budget Form */}
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7">
-              <h2 className="text-[17px] font-semibold mb-1">Set a Budget</h2>
-              <p className="text-white/30 text-[12px] mb-6">Set an overall monthly budget or per category</p>
+            <div className="glass-card rounded-2xl p-7">
+              <h2 className="text-[17px] font-semibold mb-1 text-white">Set a Budget</h2>
+              <p className="text-gray-400 text-[12px] mb-6">Set an overall monthly budget or per category</p>
 
               {budgetError && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-[13px] mb-5">{budgetError}</div>
+                <div className="bg-error-container/20 border border-error/20 rounded-xl px-4 py-3 text-error text-[13px] mb-5 flex items-center gap-2"><span className="material-symbols-outlined text-sm">error</span> {budgetError}</div>
               )}
 
               <form onSubmit={handleAddBudget} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
                 <div>
-                  <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Amount (₹) *</label>
-                  <input type="number" className={inputClass} placeholder="5000" value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)} min="1" required />
+                  <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Amount (₹) *</label>
+                  <input type="number" className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder-gray-500" placeholder="5000" value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)} min="1" required />
                 </div>
                 <div>
-                  <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Month *</label>
-                  <select className={inputClass} value={budgetMonth} onChange={(e) => setBudgetMonth(e.target.value)}>
+                  <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Month *</label>
+                  <select className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white" value={budgetMonth} onChange={(e) => setBudgetMonth(e.target.value)}>
                     {MONTHS.map((m, i) => (<option key={i} value={i + 1}>{m}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Year *</label>
-                  <select className={inputClass} value={budgetYear} onChange={(e) => setBudgetYear(e.target.value)}>
+                  <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Year *</label>
+                  <select className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white" value={budgetYear} onChange={(e) => setBudgetYear(e.target.value)}>
                     {[2024, 2025, 2026, 2027].map((y) => (<option key={y} value={y}>{y}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Category</label>
-                  <select className={inputClass} value={budgetCategoryId} onChange={(e) => setBudgetCategoryId(e.target.value)}>
+                  <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Category</label>
+                  <select className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white" value={budgetCategoryId} onChange={(e) => setBudgetCategoryId(e.target.value)}>
                     <option value="">Overall (no category)</option>
                     {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                   </select>
                 </div>
-                <button type="submit" disabled={addingBudget} className="py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[14px] font-semibold rounded-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed">
+                <button type="submit" disabled={addingBudget} className="py-2.5 bg-gradient-to-tr from-[#6366f1] to-[#a855f7] text-white text-[14px] font-semibold rounded-xl hover:opacity-90 hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed disabled:transform-none">
                   {addingBudget ? "Adding..." : "+ Set Budget"}
                 </button>
               </form>
@@ -632,10 +576,10 @@ const handleAddBudget = async (e) => {
 
             {/* Budget Cards */}
             {budgets.length === 0 ? (
-              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-16 text-center">
-                <div className="text-5xl mb-4">🎯</div>
-                <h3 className="text-[17px] font-semibold mb-2">No budgets set yet</h3>
-                <p className="text-white/30 text-sm">Set your first budget above to start tracking</p>
+              <div className="glass-card rounded-2xl p-16 text-center">
+                <span className="material-symbols-outlined text-6xl text-gray-600 mb-4">track_changes</span>
+                <h3 className="text-[17px] font-semibold mb-2 text-white">No budgets set yet</h3>
+                <p className="text-gray-400 text-sm">Set your first budget above to start tracking</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -644,21 +588,22 @@ const handleAddBudget = async (e) => {
                   const barColor = getBarColor(budget.percentage);
                   const cappedPct = Math.min(budget.percentage, 100);
                   return (
-                    <div key={budget.id} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 hover:border-white/[0.13] transition-colors">
+                    <div key={budget.id} className="glass-card hover-lift rounded-2xl p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[15px] font-semibold">{budget.category ? budget.category.name : "Overall"}</span>
+                            <span className="text-[15px] font-semibold text-white">{budget.category ? budget.category.name : "Overall"}</span>
                             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.text}</span>
                           </div>
-                          <p className="text-white/35 text-[12px]">{MONTHS[budget.month - 1]} {budget.year}</p>
+                          <p className="text-gray-400 text-[12px]">{MONTHS[budget.month - 1]} {budget.year}</p>
                         </div>
                         <button
                           onClick={() => handleDeleteBudget(budget)}
                           disabled={deletingBudgetId === budget.id}
-                          className="bg-red-500/[0.08] border border-red-500/20 text-red-300 text-[11px] px-3 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-40"
+                          className="material-symbols-outlined text-gray-600 hover:text-error transition-colors p-1 disabled:opacity-40"
+                          title="Delete Budget"
                         >
-                          {deletingBudgetId === budget.id ? "..." : "Delete"}
+                          {deletingBudgetId === budget.id ? "hourglass_empty" : "delete"}
                         </button>
                       </div>
                       <div className="mb-3">
@@ -667,14 +612,14 @@ const handleAddBudget = async (e) => {
                         </div>
                       </div>
                       <div className="flex justify-between items-center text-[13px]">
-                        <div><span className="text-white/40">Spent </span><span className="font-semibold text-white">₹{budget.spent.toFixed(2)}</span></div>
-                        <div><span className={`font-bold text-[15px] ${budget.percentage >= 100 ? "text-red-400" : budget.percentage >= 80 ? "text-amber-400" : "text-emerald-400"}`}>{budget.percentage.toFixed(0)}%</span></div>
-                        <div className="text-right"><span className="text-white/40">Limit </span><span className="font-semibold text-white">₹{budget.amount.toFixed(2)}</span></div>
+                        <div><span className="text-gray-400">Spent </span><span className="font-semibold text-white">₹{budget.spent.toFixed(2)}</span></div>
+                        <div><span className={`font-bold text-[15px] ${budget.percentage >= 100 ? "text-error" : budget.percentage >= 80 ? "text-amber-400" : "text-emerald-400"}`}>{budget.percentage.toFixed(0)}%</span></div>
+                        <div className="text-right"><span className="text-gray-400">Limit </span><span className="font-semibold text-white">₹{budget.amount.toFixed(2)}</span></div>
                       </div>
                       <div className="mt-3 pt-3 border-t border-white/[0.06] text-[12px] text-center">
                         {budget.remaining >= 0
                           ? <span className="text-emerald-400">₹{budget.remaining.toFixed(2)} remaining</span>
-                          : <span className="text-red-400">₹{Math.abs(budget.remaining).toFixed(2)} over budget!</span>
+                          : <span className="text-error">₹{Math.abs(budget.remaining).toFixed(2)} over budget!</span>
                         }
                       </div>
                     </div>
@@ -687,112 +632,122 @@ const handleAddBudget = async (e) => {
 
         {/* ── EXPENSES TAB ── */}
         {activeTab === "expenses" && (
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7 animate-fade-up">
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-6 pb-6 border-b border-white/[0.06]">
-              <input
-                type="text"
-                placeholder="🔍 Search expenses..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-                className={`${filterInputClass} min-w-[180px] flex-1`}
-              />
-              <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })} className={filterInputClass}>
-                <option value="">All Categories</option>
-                {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-              </select>
-              <input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value, page: 1 })} className={filterInputClass} />
-              <input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value, page: 1 })} className={filterInputClass} />
-              <select value={filters.sort} onChange={(e) => setFilters({ ...filters, sort: e.target.value })} className={filterInputClass}>
-                <option value="latest">Latest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="amount_high">High Amount</option>
-                <option value="amount_low">Low Amount</option>
-              </select>
-              {hasActiveFilters && (
-                <button onClick={() => setFilters({ category: "", from: "", to: "", search: "", sort: "latest", page: 1 })}
-                  className="bg-red-500/10 border border-red-500/20 text-red-300 text-[12px] px-3.5 py-2.5 rounded-xl hover:bg-red-500/20 transition-colors cursor-pointer whitespace-nowrap">
-                  ✕ Clear
-                </button>
-              )}
-            </div>
-
-            {/* Table Header */}
-            <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
-              <div>
-                <h2 className="text-[17px] font-semibold mb-0.5">All Expenses</h2>
-                <p className="text-[12px] text-white/30">{expenses.length} records {hasActiveFilters && `(filtered from ${allExpenses.length} total)`}</p>
+          <div className="glass-card rounded-2xl overflow-hidden animate-fade-up">
+            {/* Filters Section (SpEndora adapted) */}
+            <div className="p-6 flex flex-col gap-4 border-b border-white/5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h2 className="font-h2 text-data-display text-white">Recent Expenses</h2>
+                <div className="flex items-center gap-3">
+                  <div className="relative group">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors">search</span>
+                    <input value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })} className="bg-[#050508] border border-[#141420] text-sm rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all w-64 text-white placeholder-gray-500" placeholder="Search transactions..." type="text"/>
+                  </div>
+                </div>
               </div>
-              {expenses.length > 0 && (
-                <button onClick={() => router.push("/add-expense")}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold text-[13px] px-5 py-2.5 rounded-xl hover:opacity-90 transition-all cursor-pointer">
-                  + New
-                </button>
-              )}
+
+              {/* Advanced Filters Row */}
+              <div className="flex flex-wrap gap-3 items-center">
+                <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })} className="bg-[#050508] border border-[#141420] text-sm rounded-xl px-4 py-2 text-white outline-none focus:border-primary transition-all">
+                  <option value="">All Categories</option>
+                  {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                </select>
+                <input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value, page: 1 })} className="bg-[#050508] border border-[#141420] text-sm rounded-xl px-4 py-2 text-gray-400 outline-none focus:border-primary transition-all" />
+                <input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value, page: 1 })} className="bg-[#050508] border border-[#141420] text-sm rounded-xl px-4 py-2 text-gray-400 outline-none focus:border-primary transition-all" />
+                <select value={filters.sort} onChange={(e) => setFilters({ ...filters, sort: e.target.value })} className="bg-[#050508] border border-[#141420] text-sm rounded-xl px-4 py-2 text-white outline-none focus:border-primary transition-all">
+                  <option value="latest">Latest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="amount_high">High Amount</option>
+                  <option value="amount_low">Low Amount</option>
+                </select>
+                {hasActiveFilters && (
+                  <button onClick={() => setFilters({ category: "", from: "", to: "", search: "", sort: "latest", page: 1 })}
+                    className="flex items-center gap-1 bg-error-container/20 border border-error/20 text-error text-sm px-3 py-2 rounded-xl hover:bg-error-container/40 transition-colors cursor-pointer whitespace-nowrap">
+                    <span className="material-symbols-outlined text-sm">close</span> Clear
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Expense List */}
             {expenses.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-5xl mb-4">{hasActiveFilters ? "🔍" : "🧾"}</div>
-                <h3 className="text-[17px] font-semibold mb-2">{hasActiveFilters ? "No results found" : "No expenses yet"}</h3>
-                <p className="text-white/30 text-sm mb-7">{hasActiveFilters ? "Try changing your filters" : "Start tracking your spending"}</p>
+                <span className="material-symbols-outlined text-6xl text-gray-600 mb-4">{hasActiveFilters ? "search_off" : "receipt_long"}</span>
+                <h3 className="text-lg font-semibold text-white mb-2">{hasActiveFilters ? "No results found" : "No expenses yet"}</h3>
+                <p className="text-gray-400 text-sm mb-7">{hasActiveFilters ? "Try changing your filters" : "Start tracking your spending"}</p>
                 {!hasActiveFilters && (
-                  <button onClick={() => router.push("/add-expense")}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold text-sm px-6 py-3 rounded-xl hover:opacity-90 transition-all cursor-pointer">
-                    + Add First Expense
+                  <button onClick={() => router.push("/add-expense")} className="flex items-center gap-2 bg-gradient-to-tr from-[#6366f1] to-[#a855f7] text-white font-semibold text-sm px-6 py-2.5 rounded-xl hover:opacity-90 hover:-translate-y-0.5 transition-all cursor-pointer">
+                    <span className="material-symbols-outlined text-sm">add</span> Add First Expense
                   </button>
                 )}
               </div>
             ) : (
-              <div>
-                {expenses.map((expense) => (
-                  <div key={expense.id} className="flex items-center justify-between gap-3 py-4 border-b border-white/[0.05] last:border-none last:pb-0 first:pt-0">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-[42px] h-[42px] bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-lg shrink-0">💸</div>
-                      <div className="min-w-0">
-                        <div className="text-[14px] font-medium mb-1 truncate">
-                          {expense.note ? expense.note : <span className="text-white/30 italic">No note</span>}
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[12px] text-white/30">{formatDate(expense.date)}</span>
-                          {expense.category && (
-                            <span className="bg-violet-500/10 border border-violet-500/25 text-violet-300 text-[11px] px-2 py-0.5 rounded-full">{expense.category.name}</span>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-y border-white/5 bg-white/[0.02]">
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Entity & Note</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {expenses.map((expense) => (
+                      <tr key={expense.id} className="hover:bg-white/[0.02] transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                              <span className="material-symbols-outlined text-primary">shopping_bag</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-white truncate">{expense.note ? expense.note : <span className="text-gray-500 italic">No note</span>}</p>
+                              <p className="text-xs text-gray-500 truncate">Expense Record</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {expense.category ? (
+                            <span className="px-2 py-1 rounded-md bg-secondary/10 text-secondary text-[10px] font-bold uppercase">{expense.category.name}</span>
+                          ) : (
+                            <span className="text-gray-500 text-xs">-</span>
                           )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2.5 shrink-0">
-                      <span className="text-[16px] font-bold text-red-400">-₹{(expense.amount ?? 0).toFixed(2)}</span>
-                      <button onClick={() => openEdit(expense)} className="bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[12px] px-3.5 py-1.5 rounded-lg hover:bg-blue-500/20 transition-colors cursor-pointer">Edit</button>
-                      <button onClick={() => handleDelete(expense)} disabled={deletingId === expense.id}
-                        className="bg-red-500/[0.08] border border-red-500/20 text-red-300 text-[12px] px-3.5 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
-                        {deletingId === expense.id ? "..." : "Delete"}
-                      </button>
-                    </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">{formatDate(expense.date)}</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-white whitespace-nowrap">-₹{(expense.amount ?? 0).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => openEdit(expense)} className="material-symbols-outlined text-gray-500 hover:text-primary transition-colors text-xl p-1" title="Edit">edit</button>
+                            <button onClick={() => handleDelete(expense)} disabled={deletingId === expense.id} className="material-symbols-outlined text-gray-500 hover:text-error transition-colors text-xl p-1 disabled:opacity-40" title="Delete">{deletingId === expense.id ? "hourglass_empty" : "delete"}</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            {/* Pagination & Total Footer */}
+            {expenses.length > 0 && (
+              <div className="p-4 border-t border-white/5 bg-white/[0.01] flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-[13px] text-gray-500">Page {filters.page} of {totalPages}</span>
+                  <div className="flex gap-2">
+                    <button disabled={filters.page === 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })} className="p-1 rounded bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                      <span className="material-symbols-outlined text-sm">chevron_left</span>
+                    </button>
+                    <button disabled={filters.page >= totalPages} onClick={() => setFilters({ ...filters, page: filters.page + 1 })} className="p-1 rounded bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                      <span className="material-symbols-outlined text-sm">chevron_right</span>
+                    </button>
                   </div>
-                ))}
-                <div className="flex justify-between items-center mt-5 pt-5 border-t border-white/[0.08]">
-                  <span className="text-sm text-white/45 font-medium">Total</span>
-                  <span className="text-xl font-bold text-red-400">-₹{visibleTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-400">Total</span>
+                  <span className="text-lg font-bold text-error">-₹{visibleTotal.toFixed(2)}</span>
                 </div>
               </div>
             )}
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between mt-6 pt-5 border-t border-white/[0.06]">
-              <span className="text-[12px] text-white/30">Page {filters.page}</span>
-              <div className="flex gap-2">
-                <button disabled={filters.page === 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-                  className="bg-white/[0.04] border border-white/10 text-white/50 text-[13px] px-4 py-2 rounded-xl hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
-                  ← Prev
-                </button>
-                <button disabled={filters.page >= totalPages} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-                  className="bg-white/[0.04] border border-white/10 text-white/50 text-[13px] px-4 py-2 rounded-xl hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
-                  Next →
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </main>
@@ -800,38 +755,38 @@ const handleAddBudget = async (e) => {
       {/* Edit Modal */}
       {editingExpense && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm" onClick={closeEdit}>
-          <div className="w-full max-w-[460px] bg-[#13131f] border border-white/10 rounded-3xl p-9 animate-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-[460px] glass-card rounded-3xl p-9 animate-modal" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-7">
               <div>
-                <h2 className="text-xl font-bold mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>Edit Expense</h2>
-                <p className="text-white/35 text-[13px]">Update the details below</p>
+                <h2 className="text-xl font-bold mb-1 text-white">Edit Expense</h2>
+                <p className="text-gray-400 text-[13px]">Update the details below</p>
               </div>
-              <button onClick={closeEdit} className="text-white/30 hover:text-white/70 text-xl transition-colors cursor-pointer bg-transparent border-none">✕</button>
+              <button onClick={closeEdit} className="text-gray-500 hover:text-white transition-colors cursor-pointer bg-transparent border-none material-symbols-outlined">close</button>
             </div>
-            {editError && <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-[13px] mb-5">{editError}</div>}
+            {editError && <div className="bg-error-container/20 border border-error/20 rounded-xl px-4 py-3 text-error text-[13px] mb-5 flex items-center gap-2"><span className="material-symbols-outlined text-sm">error</span>{editError}</div>}
             <form onSubmit={handleUpdate} className="flex flex-col gap-4">
               <div>
-                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Amount (₹) *</label>
-                <input type="number" className={inputClass} placeholder="0.00" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} min="0.01" step="0.01" required />
+                <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Amount (₹) *</label>
+                <input type="number" className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder-gray-500" placeholder="0.00" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} min="0.01" step="0.01" required />
               </div>
               <div>
-                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Note</label>
-                <input type="text" className={inputClass} placeholder="What did you spend on?" value={editNote} onChange={(e) => setEditNote(e.target.value)} />
+                <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Note</label>
+                <input type="text" className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder-gray-500" placeholder="What did you spend on?" value={editNote} onChange={(e) => setEditNote(e.target.value)} />
               </div>
               <div>
-                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Category</label>
-                <select className={inputClass} value={editCategoryId} onChange={(e) => setEditCategoryId(e.target.value)}>
+                <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Category</label>
+                <select className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white" value={editCategoryId} onChange={(e) => setEditCategoryId(e.target.value)}>
                   <option value="">No category</option>
                   {categories.map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
                 </select>
               </div>
               <div>
-                <label className="block text-white/45 text-[11px] font-medium uppercase tracking-widest mb-2">Date *</label>
-                <input type="date" className={inputClass} value={editDate} onChange={(e) => setEditDate(e.target.value)} required />
+                <label className="block text-gray-400 text-[11px] font-medium uppercase tracking-widest mb-2">Date *</label>
+                <input type="date" className="bg-[#050508] border border-[#141420] w-full text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-400" value={editDate} onChange={(e) => setEditDate(e.target.value)} required />
               </div>
-              <div className="flex gap-3 mt-2">
-                <button type="button" onClick={closeEdit} className="flex-1 py-3 bg-white/[0.04] border border-white/10 rounded-xl text-white/50 text-[14px] font-medium hover:bg-white/[0.08] transition-all cursor-pointer">Cancel</button>
-                <button type="submit" disabled={updating} className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[14px] font-semibold rounded-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed">
+              <div className="flex gap-3 mt-4">
+                <button type="button" onClick={closeEdit} className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 text-[14px] font-medium hover:bg-white/10 hover:text-white transition-all cursor-pointer">Cancel</button>
+                <button type="submit" disabled={updating} className="flex-1 py-3 bg-gradient-to-tr from-[#6366f1] to-[#a855f7] text-white text-[14px] font-semibold rounded-xl hover:opacity-90 hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed disabled:transform-none">
                   {updating ? "Saving..." : "Save Changes"}
                 </button>
               </div>
@@ -846,19 +801,19 @@ const handleAddBudget = async (e) => {
           onClick={() => setConfirmDelete(null)}
         >
           <div
-            className="w-full max-w-[400px] bg-[#13131f] border border-white/10 rounded-3xl p-8 animate-modal"
+            className="w-full max-w-[400px] glass-card rounded-3xl p-8 animate-modal"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Icon */}
-            <div className="w-14 h-14 bg-red-500/15 border border-red-500/25 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5">
-              🗑️
+            <div className="w-14 h-14 bg-error-container/20 border border-error/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <span className="material-symbols-outlined text-error text-3xl">delete</span>
             </div>
 
             {/* Text */}
-            <h2 className="text-[18px] font-bold text-center mb-2">
+            <h2 className="text-[18px] font-bold text-center mb-2 text-white">
               Delete {confirmDelete.type === "expense" ? "Expense" : "Budget"}?
             </h2>
-            <p className="text-white/40 text-[13px] text-center mb-7 leading-relaxed">
+            <p className="text-gray-400 text-[13px] text-center mb-7 leading-relaxed">
               Are you sure you want to delete{" "}
               <span className="text-white font-medium">&quot;{confirmDelete.name}&quot;</span>?
               <br />This action cannot be undone.
@@ -868,13 +823,13 @@ const handleAddBudget = async (e) => {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 py-3 bg-white/[0.04] border border-white/10 rounded-xl text-white/50 text-[14px] font-medium hover:bg-white/[0.08] transition-all cursor-pointer"
+                className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 text-[14px] font-medium hover:bg-white/10 hover:text-white transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteAction}
-                className="flex-1 py-3 bg-red-500/90 hover:bg-red-500 text-white text-[14px] font-semibold rounded-xl transition-all cursor-pointer"
+                className="flex-1 py-3 bg-error hover:bg-error/90 text-[#690005] text-[14px] font-semibold rounded-xl transition-all cursor-pointer"
               >
                 Yes, Delete
               </button>

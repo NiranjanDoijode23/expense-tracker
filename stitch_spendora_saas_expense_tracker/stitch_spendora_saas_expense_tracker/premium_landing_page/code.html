@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @import url('https://fonts.cdnfonts.com/css/cal-sans');
+        
+        :root {
+            --bg-color: #050508;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #e4e1ed;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .glass-card {
+            background: rgba(13, 13, 20, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-gradient-text {
+            background: linear-gradient(to right, #6366f1, #a855f7, #2fd9f4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: textShine 4s linear infinite;
+        }
+
+        @keyframes textShine {
+            to { background-position: 200% center; }
+        }
+
+        .grid-background {
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(ellipse at center, black, transparent 80%);
+        }
+
+        .glow-aura {
+            filter: blur(120px);
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+        }
+
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+        }
+
+        .premium-border {
+            position: relative;
+        }
+
+        .premium-border::after {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            padding: 1px;
+            border-radius: inherit;
+            background: linear-gradient(to bottom right, rgba(99, 102, 241, 0.4), transparent, rgba(47, 217, 244, 0.4));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .button-glow:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#34343d",
+                      "on-tertiary-container": "#000608",
+                      "surface-container-high": "#292932",
+                      "inverse-surface": "#e4e1ed",
+                      "tertiary-fixed-dim": "#2fd9f4",
+                      "on-primary": "#1000a9",
+                      "error": "#ffb4ab",
+                      "inverse-primary": "#494bd6",
+                      "surface-variant": "#34343d",
+                      "on-secondary": "#3c0091",
+                      "tertiary-container": "#008395",
+                      "surface": "#13131b",
+                      "inverse-on-surface": "#303038",
+                      "on-background": "#e4e1ed",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "surface-container": "#1f1f27",
+                      "on-secondary-container": "#c4abff",
+                      "on-tertiary-fixed-variant": "#004e5a",
+                      "surface-dim": "#13131b",
+                      "on-secondary-fixed": "#23005c",
+                      "primary": "#c0c1ff",
+                      "outline-variant": "#464554",
+                      "primary-container": "#8083ff",
+                      "secondary-container": "#571bc1",
+                      "surface-container-low": "#1b1b23",
+                      "primary-fixed": "#e1e0ff",
+                      "background": "#13131b",
+                      "on-primary-container": "#0d0096",
+                      "error-container": "#93000a",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "secondary": "#d0bcff",
+                      "on-surface-variant": "#c7c4d7",
+                      "on-tertiary": "#00363e",
+                      "surface-container-lowest": "#0d0d15",
+                      "tertiary-fixed": "#a2eeff",
+                      "outline": "#908fa0",
+                      "surface-bright": "#393841",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#d0bcff",
+                      "on-primary-fixed": "#07006c",
+                      "secondary-fixed": "#e9ddff",
+                      "on-error-container": "#ffdad6",
+                      "tertiary": "#2fd9f4",
+                      "on-tertiary-fixed": "#001f25",
+                      "on-surface": "#e4e1ed",
+                      "surface-tint": "#c0c1ff",
+                      "on-secondary-fixed-variant": "#5516be"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "xl": "3rem",
+                      "lg": "2rem",
+                      "sm": "1rem",
+                      "md": "1.5rem",
+                      "unit": "4px",
+                      "xs": "0.5rem",
+                      "margin": "32px"
+              },
+              "fontFamily": {
+                      "caption": ["Inter"],
+                      "body-main": ["Inter"],
+                      "data-display": ["Space Grotesk"],
+                      "body-sm": ["Inter"],
+                      "h1": ["Cal Sans"],
+                      "h2": ["Cal Sans"]
+              },
+              "fontSize": {
+                      "caption": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "body-main": ["16px", {"lineHeight": "1.8", "letterSpacing": "0", "fontWeight": "400"}],
+                      "data-display": ["24px", {"lineHeight": "1", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                      "body-sm": ["14px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                      "h1": ["64px", {"lineHeight": "1.05", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                      "h2": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="font-body-main text-body-main">
+<div class="fixed inset-0 noise-bg z-[60]"></div>
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 border-b border-white/[0.05] bg-[#050508]/70 backdrop-blur-2xl">
+<nav class="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
+<div class="text-xl font-bold tracking-tighter text-white flex items-center gap-2">
+<span class="w-9 h-9 bg-primary-container/20 border border-primary/20 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</span>
+                SpEndora
+            </div>
+<div class="hidden md:flex items-center gap-10">
+<a class="text-sm font-medium text-gray-400 hover:text-white transition-colors duration-200" href="#">Expenses</a>
+<a class="text-sm font-medium text-gray-400 hover:text-white transition-colors duration-200" href="#">Analytics</a>
+<a class="text-sm font-medium text-gray-400 hover:text-white transition-colors duration-200" href="#">Budget</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="hidden md:block text-sm text-gray-400 hover:text-white transition-colors duration-200 font-medium">Sign In</button>
+<button class="bg-[#6366f1] text-white px-6 py-2.5 rounded-full text-sm font-bold active:scale-95 transition-all button-glow">
+                    Get Started
+                </button>
+</div>
+</nav>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative pt-32 pb-48 px-6 overflow-hidden">
+<div class="absolute inset-0 grid-background z-0"></div>
+<div class="max-w-7xl mx-auto text-center relative z-10">
+<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-caption font-caption mb-10 reveal">
+<span class="w-1.5 h-1.5 rounded-full bg-[#6366f1] animate-ping"></span>
+<span class="text-primary/80 uppercase tracking-widest text-[10px]">Version 2.0 Is Live</span>
+</div>
+<h1 class="font-h1 text-[40px] md:text-h1 hero-gradient-text mb-8 max-w-4xl mx-auto reveal" style="transition-delay: 0.1s">
+                    Take control of every single rupee
+                </h1>
+<p class="text-on-surface-variant text-xl max-w-2xl mx-auto mb-14 reveal" style="transition-delay: 0.2s">
+                    Experience financial clarity with the world's most precise expense tracker. Engineered for those who demand excellence in their personal finance.
+                </p>
+<div class="flex flex-col md:flex-row items-center justify-center gap-6 reveal" style="transition-delay: 0.3s">
+<button class="w-full md:w-auto bg-white text-black px-10 py-4 rounded-full font-bold text-lg active:scale-95 transition-all shadow-xl shadow-white/5 button-glow">
+                        Start Your Journey
+                    </button>
+<button class="w-full md:w-auto bg-white/[0.03] border border-white/10 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white/[0.08] transition-colors backdrop-blur-md">
+                        View Demo
+                    </button>
+</div>
+</div>
+<!-- Floating Dashboard Mockup -->
+<div class="mt-24 max-w-6xl mx-auto relative px-4 reveal" style="transition-delay: 0.4s">
+<div class="absolute inset-0 glow-aura -z-10 translate-y-20"></div>
+<div class="glass-card rounded-[2.5rem] p-3 shadow-2xl premium-border">
+<div class="bg-[#050508] rounded-[2rem] overflow-hidden border border-white/5">
+<img class="w-full h-auto opacity-90 scale-105 hover:scale-100 transition-transform duration-[2s]" data-alt="Financial dashboard mockup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjhx0tQqOeghajAzjdiwXwnbIvKBJSTOnc7Q57sUBDw4on5knkLlIBS7RpPKlxI1B3IBDeccEOlef1R4iOOBLLE9XGpXbOHY-8aAPh-5caXOTrV2qnXviEMHq6npMfu9b_nMX61moFQ9TEDc5gxCB0iAe9UhXpTaBPBQNz7arn2_k3DjkprQnCfPOLSEI3q6RxwjG2v-Ng4REDwOXrsfS7BX8_aFkbq08Lg6Y_2a7KB5_awLEQXoTGgSs9-vOaeCadKXD3WIqnrsjB"/>
+</div>
+<!-- Decorative Elements -->
+<div class="absolute -top-10 -right-10 glass-card p-5 rounded-2xl border border-white/10 hidden lg:block backdrop-blur-3xl">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-2xl">trending_up</span>
+</div>
+<div>
+<p class="text-caption text-gray-500 uppercase tracking-tighter">Savings Rate</p>
+<p class="font-data-display text-white text-2xl tracking-tighter">+24.5%</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid -->
+<section class="py-48 px-6 max-w-7xl mx-auto">
+<div class="mb-24 text-center md:text-left reveal">
+<h2 class="font-h2 text-h2 text-white mb-6">Precision Engineering</h2>
+<p class="text-on-surface-variant max-w-xl text-lg">Every tool you need to manage wealth with surgical precision and effortless elegance.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 grid-rows-2 gap-6 h-auto md:h-[800px]">
+<!-- Feature 1: Large -->
+<div class="md:col-span-8 md:row-span-1 glass-card rounded-3xl p-10 hover-lift group reveal premium-border">
+<div class="flex flex-col h-full justify-between">
+<div>
+<div class="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-8 border border-indigo-500/20 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[#6366f1] text-3xl" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<h3 class="text-3xl font-h2 text-white mb-4">Real-time Analytics</h3>
+<p class="text-on-surface-variant text-lg max-w-md">Visualize your spending patterns with high-fidelity charts that update instantly as you transact.</p>
+</div>
+<div class="mt-8 overflow-hidden h-32 opacity-30 grayscale hover:grayscale-0 transition-all">
+<!-- Decorative SVG line graph placeholder -->
+<svg class="w-full h-full stroke-[#6366f1] stroke-2 fill-none" viewbox="0 0 400 100">
+<path d="M0,80 Q50,70 100,20 T200,50 T300,10 T400,60"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Feature 2: Small -->
+<div class="md:col-span-4 md:row-span-1 glass-card rounded-3xl p-10 hover-lift group reveal" style="transition-delay: 0.1s">
+<div class="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-8 border border-cyan-500/20">
+<span class="material-symbols-outlined text-tertiary text-3xl" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<h3 class="text-2xl font-h2 text-white mb-4">Bank-Grade Security</h3>
+<p class="text-on-surface-variant">Your financial data is encrypted with 256-bit AES protection, ensuring privacy at every layer.</p>
+</div>
+<!-- Feature 3: Small -->
+<div class="md:col-span-4 md:row-span-1 glass-card rounded-3xl p-10 hover-lift group reveal" style="transition-delay: 0.2s">
+<div class="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-8 border border-purple-500/20">
+<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<h3 class="text-2xl font-h2 text-white mb-4">Multi-Bank Sync</h3>
+<p class="text-on-surface-variant">Connect all your accounts seamlessly in one unified view.</p>
+</div>
+<!-- Feature 4: Medium -->
+<div class="md:col-span-4 md:row-span-1 glass-card rounded-3xl p-10 hover-lift group reveal" style="transition-delay: 0.3s">
+<div class="w-14 h-14 rounded-2xl bg-pink-500/10 flex items-center justify-center mb-8 border border-pink-500/20">
+<span class="material-symbols-outlined text-error text-3xl" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+<h3 class="text-2xl font-h2 text-white mb-4">Smart Alerts</h3>
+<p class="text-on-surface-variant">AI-powered notifications before you even approach your budget limits.</p>
+</div>
+<!-- Feature 5: Medium -->
+<div class="md:col-span-4 md:row-span-1 glass-card rounded-3xl p-10 hover-lift group reveal" style="transition-delay: 0.4s">
+<div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+</div>
+<h3 class="text-2xl font-h2 text-white mb-4">OCR Scanning</h3>
+<p class="text-on-surface-variant">Snap a photo and let our engine categorize your receipts instantly.</p>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="py-48 px-6 relative bg-surface-container-lowest/20">
+<div class="max-w-7xl mx-auto">
+<div class="text-center mb-24 reveal">
+<h2 class="font-h2 text-h2 text-white mb-6">Investment Plans</h2>
+<p class="text-on-surface-variant text-lg">Transparent pricing for every stage of your financial journey.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl mx-auto">
+<!-- Free Plan -->
+<div class="glass-card rounded-[2.5rem] p-12 flex flex-col reveal">
+<div class="mb-10">
+<h3 class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-3">Essential</h3>
+<div class="flex items-baseline gap-1">
+<span class="text-5xl font-h1 text-white">₹0</span>
+<span class="text-gray-500 font-medium">/mo</span>
+</div>
+</div>
+<ul class="space-y-5 mb-12 flex-grow">
+<li class="flex items-center gap-4 text-body-main text-gray-300">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+                                Track up to 50 expenses/mo
+                            </li>
+<li class="flex items-center gap-4 text-body-main text-gray-300">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+                                Basic monthly reports
+                            </li>
+<li class="flex items-center gap-4 text-body-main text-gray-300">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+                                Manual entry system
+                            </li>
+</ul>
+<button class="w-full py-4 rounded-2xl border border-white/10 text-white font-bold hover:bg-white/[0.03] transition-colors">
+                            Current Plan
+                        </button>
+</div>
+<!-- Premium Plan -->
+<div class="glass-card rounded-[2.5rem] p-12 flex flex-col border-primary/20 relative reveal premium-border shadow-[0_0_50px_-12px_rgba(99,102,241,0.3)]">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-black tracking-widest uppercase py-1.5 px-6 rounded-full shadow-lg">Most Popular</div>
+<div class="mb-10">
+<h3 class="text-primary font-bold uppercase tracking-widest text-xs mb-3">Pro Professional</h3>
+<div class="flex items-baseline gap-1">
+<span class="text-5xl font-h1 text-white">₹199</span>
+<span class="text-gray-500 font-medium">/mo</span>
+</div>
+</div>
+<ul class="space-y-5 mb-12 flex-grow">
+<li class="flex items-center gap-4 text-body-main text-white">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Unlimited expense tracking
+                            </li>
+<li class="flex items-center gap-4 text-body-main text-white">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Advanced AI Analytics
+                            </li>
+<li class="flex items-center gap-4 text-body-main text-white">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Automatic Bank Sync
+                            </li>
+<li class="flex items-center gap-4 text-body-main text-white">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Priority Support
+                            </li>
+</ul>
+<button class="w-full py-4 rounded-2xl bg-white text-black font-black shadow-xl active:scale-95 transition-all button-glow">
+                            Upgrade Now
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-48 px-6 max-w-7xl mx-auto overflow-hidden">
+<div class="flex flex-col lg:flex-row gap-20 items-center">
+<div class="lg:w-1/3 reveal">
+<h2 class="font-h2 text-h2 text-white mb-8">Trusted by industry titans</h2>
+<p class="text-on-surface-variant text-lg">Our commitment to precision has earned us the trust of India's leading financial advisors and tech innovators.</p>
+</div>
+<div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="glass-card p-10 rounded-3xl reveal" style="transition-delay: 0.1s">
+<p class="text-white text-lg italic mb-10 leading-relaxed">"SpEndora changed the way I look at my business cash flow. The precision is unmatched in the Indian fintech market."</p>
+<div class="flex items-center gap-5">
+<img class="w-14 h-14 rounded-full border-2 border-white/10" data-alt="Arjun Mehta" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtCyXOX2wkZqk-KB_vy4NSzNNT39I6BAndyW9CZeSWAqVpHDFPpmvUOCx1CFnBxeJBtBIlfLwIHnb7syELA_R11RNAynD4kC_Oo3qnhVYP1je1S7NYaI6fdyN9bSx21dqWhHbakVV81L8Ku4DB3pWeX1JQ6KUBgQLjaEnJP_K3kI3Vxt9hs_40jzDTaMfjbo6bY3Fjv21PO8S7KHUo2Rnklf8lmvFVZ5Xd_Cx8MLspjqwj39L3xtQQapMPGkLnNIjmycgEWd_0n1SM"/>
+<div>
+<p class="font-bold text-white text-lg">Arjun Mehta</p>
+<p class="text-caption text-primary uppercase tracking-widest text-[10px]">CEO, TechFlow India</p>
+</div>
+</div>
+</div>
+<div class="glass-card p-10 rounded-3xl reveal" style="transition-delay: 0.2s">
+<p class="text-white text-lg italic mb-10 leading-relaxed">"Finally an app that understands the complexity of multiple bank accounts and UPI transactions. Simply seamless."</p>
+<div class="flex items-center gap-5">
+<img class="w-14 h-14 rounded-full border-2 border-white/10" data-alt="Priya Sharma" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5iL0f-PKthR7hzftG6X9o7x14YXWDbj3oGICGQn91norX0CiQ1NeDKZLSbnYBuc_BEsIpnqzpN6C8FiWmVUQs2R_foyWGLDQaEmcJYC89O05a7KRbLTe4TFJ5taJssNBf3jDNDIswrsOxyp_vRfDeT6nsbz1q1gzvBs0M7AK9Bw8mA4KCrmPAG2Ls5S-5qbpLCME__GEMDaSsGsUsPNDG8fbSFmLKErYs5z-4liRiplXI6ErPcxtl4QdBuzuYkrtMl0eJoCioJie0"/>
+<div>
+<p class="font-bold text-white text-lg">Priya Sharma</p>
+<p class="text-caption text-primary uppercase tracking-widest text-[10px]">Investment Consultant</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-48 px-6">
+<div class="max-w-7xl mx-auto glass-card rounded-[4rem] p-16 md:p-32 text-center relative overflow-hidden reveal premium-border shadow-[0_0_100px_-20px_rgba(99,102,241,0.2)]">
+<div class="absolute inset-0 bg-gradient-to-br from-[#6366f1]/20 via-transparent to-[#2fd9f4]/20 -z-10"></div>
+<h2 class="font-h1 text-[40px] md:text-h1 text-white mb-10">Ready for absolute control?</h2>
+<p class="text-on-surface-variant text-xl mb-14 max-w-2xl mx-auto">Join 50,000+ users who have optimized their savings with SpEndora. No hidden fees. Just financial excellence.</p>
+<div class="flex flex-col md:flex-row items-center justify-center gap-8">
+<button class="bg-white text-black px-12 py-5 rounded-full font-black text-xl shadow-2xl hover:bg-gray-100 transition-all active:scale-95 button-glow">
+                        GET STARTED NOW
+                    </button>
+<div class="flex items-center gap-3 text-gray-400 font-medium">
+<span class="material-symbols-outlined text-primary text-2xl">verified_user</span>
+                        Secure &amp; Encrypted
+                    </div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-white/5 bg-[#050508] py-20 px-8">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+<div class="flex flex-col items-center md:items-start gap-4">
+<div class="text-2xl font-black text-white tracking-tighter">SpEndora</div>
+<p class="text-sm font-medium text-gray-500">© 2024 SpEndora. Engineering Financial Freedom.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-10">
+<a class="text-sm font-medium text-gray-500 hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="text-sm font-medium text-gray-500 hover:text-white transition-colors" href="#">Terms of Service</a>
+<a class="text-sm font-medium text-gray-500 hover:text-white transition-colors" href="#">Security Standards</a>
+<a class="text-sm font-medium text-gray-500 hover:text-white transition-colors" href="#">Help Center</a>
+</div>
+</div>
+</footer>
+<script>
+    // Reveal animation logic
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px"
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body></html>

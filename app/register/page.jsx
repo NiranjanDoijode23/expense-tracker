@@ -51,38 +51,58 @@ export default function RegisterPage() {
   const strength = getStrength();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-mesh min-h-screen flex flex-col font-body-main text-on-background selection:bg-primary/30">
 
       {/* Background Orbs */}
       <div className="absolute w-[500px] h-[500px] bg-indigo-500 rounded-full blur-[80px] opacity-15 -top-24 -right-36 pointer-events-none" />
       <div className="absolute w-[400px] h-[400px] bg-blue-500 rounded-full blur-[80px] opacity-15 -bottom-20 -left-24 pointer-events-none" />
 
-      {/* Card */}
-      <div className="absolute top-8 right-8 z-50">
-        <ThemeToggle />
-      </div>
+      <nav className="sticky top-0 w-full z-50 border-b border-white/5 bg-[#0d0d14]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/10">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 max-w-7xl mx-auto">
+          <div className="text-xl font-bold tracking-tighter text-white flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6366f1] to-[#2fd9f4] flex items-center justify-center">
+              <span className="material-symbols-outlined text-white text-lg">account_balance_wallet</span>
+            </span>
+            SpEndora
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button onClick={() => router.push("/login")} className="text-gray-400 hover:text-white transition-colors duration-200 font-caption">
+              Sign In
+            </button>
+          </div>
+        </div>
+      </nav>
 
-      <div className="w-full max-w-md bg-white/[0.04] border border-white/[0.09] rounded-3xl px-10 py-11 backdrop-blur-xl relative z-10 animate-fade-up">
+      <main className="flex-grow flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-[480px] glass-card rounded-xl p-8 md:p-10 shadow-2xl animate-fade-up">
 
         {/* Icon */}
         <div className="w-13 h-13 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-center text-2xl mb-7 w-[52px] h-[52px]">
           ✨
         </div>
 
-        <h1 className="text-3xl font-bold text-white mb-1.5" style={{ fontFamily: "'Playfair Display', serif" }}>
-          Create account
-        </h1>
-        <p className="text-white/40 text-sm mb-8">
-          Start tracking your expenses today
-        </p>
+        <h1 className="font-h2 text-h2 text-white mb-2">Create Account</h1>
+        <p className="font-body-sm text-on-surface-variant mb-8">Precision finance starts with your first entry.</p>
 
         <button
           onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="w-full mb-5 flex items-center justify-center gap-3 bg-white text-slate-900 px-4 py-3 rounded-xl font-semibold hover:bg-slate-100 transition-colors"
+          className="w-full mb-4 flex items-center justify-center gap-2 py-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 active:scale-[0.98] transition-all"
         >
-          <span className="text-lg">🟢</span>
-          Continue with Google
+          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          <span className="font-caption text-white">Google</span>
         </button>
+
+        <div className="relative flex items-center mb-8">
+          <div className="flex-grow border-t border-white/5"></div>
+          <span className="px-4 font-caption text-outline text-[10px] uppercase tracking-[0.2em]">Or continue with email</span>
+          <div className="flex-grow border-t border-white/5"></div>
+        </div>
 
         {/* Error */}
         {error && (
@@ -91,28 +111,24 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="flex flex-col gap-5">
+        <form onSubmit={handleRegister} className="space-y-6">
 
           {/* Email */}
           <div>
-            <label className="block text-white/50 text-[11px] font-medium uppercase tracking-widest mb-2">
-              Email
-            </label>
+            <label className="font-caption text-on-surface-variant block ml-1">Email Address</label>
             <input
               type="email"
-              placeholder="you@example.com"
+              placeholder="name@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-white text-[15px] placeholder-white/25 outline-none focus:border-blue-400/50 focus:bg-white/[0.07] transition-all"
+              className="w-full bg-[#050508] border border-white/10 rounded-lg py-3 px-4 text-white font-body-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-600"
             />
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-white/50 text-[11px] font-medium uppercase tracking-widest mb-2">
-              Password
-            </label>
+            <label className="font-caption text-on-surface-variant block ml-1">Password</label>
             <input
               type="password"
               placeholder="Min. 8 characters"
@@ -120,7 +136,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-white text-[15px] placeholder-white/25 outline-none focus:border-blue-400/50 focus:bg-white/[0.07] transition-all"
+              className="w-full bg-[#050508] border border-white/10 rounded-lg py-3 px-4 text-white font-body-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-gray-600"
             />
 
             {/* Password Strength */}
@@ -142,34 +158,36 @@ export default function RegisterPage() {
           </div>
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold text-[15px] rounded-xl hover:opacity-90 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
-          >
+          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-[#6366f1] to-[#4f46e5] text-white py-4 rounded-xl font-data-display text-sm font-bold uppercase tracking-widest hover:brightness-110 active:scale-[0.97] transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed">
             {loading ? "Creating account..." : "Create Account"}
           </button>
 
         </form>
 
         {/* Login link */}
-        <p className="text-center text-white/30 text-[13px] mt-7">
+        <p className="text-center mt-8 font-body-sm text-on-surface-variant">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-400 font-medium hover:text-blue-300 transition-colors">
+          <Link href="/login" className="text-primary font-medium hover:underline">
             Sign in
           </Link>
         </p>
 
       </div>
+      </main>
 
       {/* Fonts */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
         @keyframes fade-up {
           from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-up { animation: fade-up 0.5s ease forwards; }
+        .bg-mesh {
+          background-color: #050508;
+          background-image: 
+            radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(47, 217, 244, 0.1) 0px, transparent 50%);
+        }
       `}</style>
     </div>
   );
