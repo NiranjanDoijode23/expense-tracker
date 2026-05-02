@@ -864,7 +864,7 @@ const confirmDeleteBudget = async () => {
         </div>
       )}
       {/* ✅ Delete Confirmation Modal */}
-      {confirmDelete && (
+      {confirmDelete && confirmDelete.type === "expense" && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm"
           onClick={() => setConfirmDelete(null)}
@@ -916,7 +916,7 @@ const confirmDeleteBudget = async () => {
       )}
 
       {/* ── DELETE CONFIRMATION MODAL ── */}
-{confirmDelete && (
+{confirmDelete && confirmDelete.type === "budget" && (
   <div
     className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm"
     onClick={() => setConfirmDelete(null)}
